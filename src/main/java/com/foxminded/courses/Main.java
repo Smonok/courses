@@ -1,12 +1,10 @@
 package com.foxminded.courses;
 
-import java.io.IOException;
-import java.sql.*;
-
 public class Main {
 
-    public static void main(String[] args) throws SQLException, IOException {
+  public static void main(String[] args) {
+    InitializerUtil.startApp(InitializerUtil.URL, InitializerUtil.USER,
+        InitializerUtil.PASSWORD);
 
-        new Menu().displayMenu(Constants.URL, Constants.USER, Constants.PASSWORD);
-    }
+  }
 }

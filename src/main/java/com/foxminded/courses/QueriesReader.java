@@ -11,44 +11,51 @@ import java.util.Objects;
 import java.util.StringJoiner;
 
 public class QueriesReader {
-    private final ClassLoader loader = QueriesReader.class.getClassLoader();
-    private int tableBeginIndex = 0;
+  private final ClassLoader loader = QueriesReader.class.getClassLoader();
+  private Boolean isTableFound = false;
+  private int tableBeginIndex;
 
-    public String readCreateTableQuery(String fileName, String tableName) throws IOException {
-        File sql = initializeFile(fileName);
-        List<String> sqlLines = new ArrayList<>(Files.readAllLines(Paths.get(sql.getAbsolutePath())));
-        StringJoiner query = new StringJoiner("\n");
+  public String readCreateTableQuery(String fileName, String tableName)
+    throws IOException {
+    File sql = initializeFile(fileName);
+    List<String> sqlLines = new ArrayList<>(Files.readAllLines(Paths.get(sql
+        .getAbsolutePath())));
+    StringJoiner query = new StringJoiner("\n");
 
-        findTableBeginIndex(sqlLines, tableName);
-        for (int i = tableBeginIndex; i < sqlLines.size(); i++) {
-            query.add(sqlLines.get(i));
-            if (sqlLines.get(i)
-                    .contains(";")) {
-                break;
-            }
-        }
-
-        return query.toString();
+    findTableBeginIndex(sqlLines, tableName);
+    if (!isTableFound) {
+      return "";
     }
 
-    private File initializeFile(String fileName) {
-        URL url = Objects.requireNonNull(loader.getResource(fileName));
-
-        return new File(url.getFile());
+    for (int i = tableBeginIndex; i < sqlLines.size(); i++) {
+      query.add(sqlLines.get(i));
+      if (sqlLines.get(i).contains(";")) {
+        break;
+      }
     }
 
-    private void findTableBeginIndex(List<String> sqlLines, String tableName) {
-        final int tableNameIndex = 2;
+    return query.toString();
+  }
 
-        sqlLines.stream()
-                .filter(line -> line.toUpperCase()
-                        .contains("TABLE"))
-                .forEach(line -> {
-                    String[] startQueryWords = line.split(Constants.SPACES_OR_BRACKET);
+  private File initializeFile(String fileName) {
+    URL url = Objects.requireNonNull(loader.getResource(fileName));
 
-                    if (tableName.equals(startQueryWords[tableNameIndex])) {
-                        tableBeginIndex = sqlLines.indexOf(line);
-                    }
-                });
-    }
+    return new File(url.getFile());
+  }
+
+  private void findTableBeginIndex(List<String> sqlLines, String tableName) {
+    final int tableNameIndex = 2;
+
+    sqlLines.stream().filter(line -> line.toUpperCase().contains("TABLE"))
+        .forEach(line -> {
+          String[] startQueryWords = line.split(
+              DatabaseConstants.SPACES_OR_BRACKET);
+
+          if (tableName.equals(startQueryWords[tableNameIndex])) {
+            tableBeginIndex = sqlLines.indexOf(line);
+            isTableFound = true;
+            return;
+          }
+        });
+  }
 }

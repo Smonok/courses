@@ -1,12 +1,12 @@
-CREATE   TABLE   groups 
+CREATE TABLE groups 
 (   
-   group_id SERIAL PRIMARY KEY NOT NULL,
+   group_id SERIAL PRIMARY KEY,
    group_name VARCHAR (20)
 );
 
 CREATE TABLE students
 (
-   student_id SERIAL PRIMARY KEY NOT NULL,
+   student_id SERIAL PRIMARY KEY,
    group_id INTEGER,
    first_name VARCHAR (20),
    last_name VARCHAR (20)
@@ -14,7 +14,7 @@ CREATE TABLE students
 
 CREATE TABLE courses
 (
-   course_id SERIAL PRIMARY KEY NOT NULL,
+   course_id SERIAL PRIMARY KEY,
    course_name VARCHAR (20),
    course_description TEXT
 );
