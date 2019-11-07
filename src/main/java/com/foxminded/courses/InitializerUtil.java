@@ -1,45 +1,64 @@
 package com.foxminded.courses;
 
-import java.io.IOException;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
 
+import org.postgresql.ds.PGSimpleDataSource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class InitializerUtil {
-  public static final String URL = "jdbc:postgresql://localhost/courses";
-  public static final String USER = "postgres";
-  public static final String PASSWORD = "32147";
+    private static final String USER = "postgres";
+    private static final String PASSWORD = "32147";
+    private static final String SERVER_NAME = "localhost";
+    private static final String DATABASE_NAME = "courses";
+    private static final PGSimpleDataSource dataSource = new PGSimpleDataSource();
+    public static final Logger log = LoggerFactory.getLogger(InitializerUtil.class);
 
-  private static Connection connection = null;
-  private static Statement statement = null;
+    public static void startApp() {
+        Connection connection = null;
+        Statement statement = null;
+        try {
+            connection = connectToDatabase();
+            try {
+                statement = connection.createStatement();
+            } catch (SQLException e) {
+                log.error("Cannot create statement");
+            }
 
-  public static void startApp(String url, String user, String password) {
-    connectToDatabase(url, user, password);
-
-    try {
-      TablesFillerUtil.fillAllTables(statement);
-    } catch (SQLException | IOException e1) {
-      e1.printStackTrace();
+            TablesFillerUtil.fillAllTables(statement);
+            new Menu().displayMenu(statement);
+        } catch (SQLException e1) {
+            e1.getMessage();
+        } finally {
+            try {
+                statement.close();
+            } catch (SQLException e) {
+                log.error("Cannot close statement");
+            }
+            try {
+                connection.close();
+            } catch (SQLException e) {
+                log.error("Cannot close connection");
+            }
+        }
     }
 
-    new Menu().displayMenu(statement);
+    private static Connection connectToDatabase() throws SQLException {
+        dataSource.setServerName(SERVER_NAME);
+        dataSource.setDatabaseName(DATABASE_NAME);
+        dataSource.setUser(USER);
+        dataSource.setPassword(PASSWORD);
+        Connection connection = null;
 
-    try {
-      statement.close();
-      connection.close();
-    } catch (SQLException e) {
-      e.printStackTrace();
-    }
-  }
+        try {
+            connection = dataSource.getConnection();
+        } catch (SQLException e) {
+            log.error("Cannot connect to database", e);
+            throw new SQLException("Cannot connect to database", e);
+        }
 
-  private static void connectToDatabase(String url, String user,
-    String password) {
-    try {
-      connection = DriverManager.getConnection(url, user, password);
-      statement = connection.createStatement();
-    } catch (SQLException e1) {
-      e1.printStackTrace();
+        return connection;
     }
-  }
 }

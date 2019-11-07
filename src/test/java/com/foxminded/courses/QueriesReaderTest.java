@@ -8,6 +8,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.net.URL;
+import java.util.NoSuchElementException;
 import java.util.Objects;
 
 import org.junit.jupiter.api.AfterEach;
@@ -15,143 +16,108 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 class QueriesReaderTest {
-  private PrintStream createTableFileWriter;
-  private final ClassLoader loader = QueriesReaderTest.class.getClassLoader();
-  private final String FILE_NAME = "create_test_tables_query.sql";
+    private PrintStream createTableFileWriter;
+    private final ClassLoader loader = QueriesReaderTest.class.getClassLoader();
+    private final String FILE_NAME = "create_test_tables_query.sql";
+    private final String COURSES_TABLE_NAME = "courses";
+    private final String GROUPS_TABLE_NAME = "groups";
 
-  private final String CREATE_GROUPS_TABLE_QUERY = "CREATE TABLE groups \n"
-      + "(  \n" + "   group_id SERIAL PRIMARY KEY,\n"
-      + "   group_name VARCHAR (20)\n" + ");";
+    private final String CREATE_GROUPS_TABLE_QUERY = "CREATE TABLE groups \n" + "(  \n"
+                    + "   group_id SERIAL PRIMARY KEY,\n" + "   group_name VARCHAR (20)\n" + ");";
 
-  private final String CREATE_COURSES_TABLE_QUERY = "CREATE TABLE courses\n"
-      + "(\n" + "   course_id SERIAL PRIMARY KEY,\n"
-      + "   course_name VARCHAR (20),\n" + "   course_description TEXT\n"
-      + ");";
+    private final String CREATE_COURSES_TABLE_QUERY = "CREATE TABLE courses\n" + "(\n"
+                    + "   course_id SERIAL PRIMARY KEY,\n" + "   course_name VARCHAR (20),\n"
+                    + "   course_description TEXT\n" + ");";
 
-  @BeforeEach
-  void initialize() throws IOException {
-    URL url = Objects.requireNonNull(loader.getResource(FILE_NAME));
-    File file = new File(url.getFile());
+    @BeforeEach
+    void initialize() throws IOException {
+        URL url = Objects.requireNonNull(loader.getResource(FILE_NAME));
+        File file = new File(url.getFile());
 
-    createTableFileWriter = new PrintStream(new FileOutputStream(file
-        .getAbsolutePath()));
-  }
+        createTableFileWriter = new PrintStream(new FileOutputStream(file.getAbsolutePath()));
+    }
 
-  @AfterEach
-  void close() {
-    createTableFileWriter.close();
-  }
+    @AfterEach
+    void close() {
+        createTableFileWriter.close();
+    }
 
-  @Test
-  void readCreateTableQueryShouldThrowNullPointerExceptionWhenFileNotFound() {
-    String incorrectFileName = "incorrect";
-    String tableName = "groups";
+    @Test
+    void readTableСreationQueryShouldThrowNullPointerExceptionWhenFileNotFound() {
+        String incorrectFileName = "incorrect";
 
-    assertThrows(NullPointerException.class, () -> new QueriesReader()
-        .readCreateTableQuery(incorrectFileName, tableName));
-  }
+        assertThrows(NullPointerException.class, () -> new QueriesReader().readTableСreationQuery(incorrectFileName,
+                        GROUPS_TABLE_NAME));
+    }
 
-  @Test
-  void readCreateTableQueryShouldReturnEmptyStringWhenEmptyFile()
-    throws IOException {
-    String tableName = "groups";
-    String expectedResult = "";
-    String actualResult = new QueriesReader().readCreateTableQuery(FILE_NAME,
-        tableName);
+    @Test
+    void readTableСreationQueryShouldThrowNoSuchElementExceptionWhenEmptyFile() throws IOException {
 
-    assertEquals(expectedResult, actualResult);
-  }
+        assertThrows(NoSuchElementException.class, () -> new QueriesReader().readTableСreationQuery(FILE_NAME,
+                        GROUPS_TABLE_NAME));
+    }
 
-  @Test
-  void readCreateTableQueryShouldReturnEmptyStringWhenTableDoesNotExists()
-    throws IOException {
-    String tableName = "students";
+    @Test
+    void readTableСreationQueryShouldThrowNoSuchElementExceptionWhenTableDoesNotExists() throws IOException {
+        String tableName = "students";
 
-    createTableFileWriter.println(CREATE_GROUPS_TABLE_QUERY);
+        createTableFileWriter.println(CREATE_GROUPS_TABLE_QUERY);
 
-    String expectedResult = "";
-    String actualResult = new QueriesReader().readCreateTableQuery(FILE_NAME,
-        tableName);
+        assertThrows(NoSuchElementException.class, () -> new QueriesReader().readTableСreationQuery(FILE_NAME,
+                        tableName));
+    }
 
-    assertEquals(expectedResult, actualResult);
-  }
+    @Test
+    void readTableСreationQueryShouldReturnQueryWhenTableExists() throws IOException {
+        createTableFileWriter.println(CREATE_COURSES_TABLE_QUERY);
 
-  @Test
-  void readCreateTableQueryShouldReturnQueryWhenTableExists()
-    throws IOException {
-    String tableName = "courses";
+        String actualResult = new QueriesReader().readTableСreationQuery(FILE_NAME, COURSES_TABLE_NAME);
 
-    createTableFileWriter.println(CREATE_COURSES_TABLE_QUERY);
+        assertEquals(CREATE_COURSES_TABLE_QUERY, actualResult);
+    }
 
-    String expectedResult = CREATE_COURSES_TABLE_QUERY;
-    String actualResult = new QueriesReader().readCreateTableQuery(FILE_NAME,
-        tableName);
+    @Test
+    void readTableСreationQueryShouldReturnQueryWhenManySpaces() throws IOException {
+        String expectedResult = "CREATE      TABLE       groups      \n" + "(  \n" + "   group_id SERIAL PRIMARY KEY,\n"
+                        + ");";
 
-    assertEquals(expectedResult, actualResult);
-  }
+        createTableFileWriter.println(expectedResult);
 
-  @Test
-  void readCreateTableQueryShouldReturnQueryWhenManySpaces()
-    throws IOException {
-    String tableName = "groups";
-    String query = "CREATE      TABLE       groups      \n" + "(  \n"
-        + "   group_id SERIAL PRIMARY KEY,\n" + ");";
+        String actualResult = new QueriesReader().readTableСreationQuery(FILE_NAME, GROUPS_TABLE_NAME);
 
-    createTableFileWriter.println(query);
+        assertEquals(expectedResult, actualResult);
+    }
 
-    String expectedResult = query;
-    String actualResult = new QueriesReader().readCreateTableQuery(FILE_NAME,
-        tableName);
+    @Test
+    void readTableСreationQueryShouldReturnQueryWhenAllInOneLine() throws IOException {
+        String expectedResult = "CREATE TABLE groups(group_id SERIAL PRIMARY KEY);";
 
-    assertEquals(expectedResult, actualResult);
-  }
+        createTableFileWriter.println(expectedResult);
 
-  @Test
-  void readCreateTableQueryShouldReturnQueryWhenAllInOneLine()
-    throws IOException {
-    String tableName = "groups";
-    String query = "CREATE TABLE groups(group_id SERIAL PRIMARY KEY);";
+        String actualResult = new QueriesReader().readTableСreationQuery(FILE_NAME, GROUPS_TABLE_NAME);
 
-    createTableFileWriter.println(query);
+        assertEquals(expectedResult, actualResult);
+    }
 
-    String expectedResult = query;
-    String actualResult = new QueriesReader().readCreateTableQuery(FILE_NAME,
-        tableName);
+    @Test
+    void readTableСreationQueryShouldReturnQueryWhenSeveralQueriesInTheFile() throws IOException {
+        createTableFileWriter.println(CREATE_GROUPS_TABLE_QUERY);
+        createTableFileWriter.println(CREATE_COURSES_TABLE_QUERY);
 
-    assertEquals(expectedResult, actualResult);
-  }
+        String actualResult = new QueriesReader().readTableСreationQuery(FILE_NAME, COURSES_TABLE_NAME);
 
-  @Test
-  void readCreateTableQueryShouldReturnQueryWhenSeveralQueriesInTheFile()
-    throws IOException {
-    String tableName = "courses";
+        assertEquals(CREATE_COURSES_TABLE_QUERY, actualResult);
+    }
 
-    createTableFileWriter.println(CREATE_GROUPS_TABLE_QUERY);
-    createTableFileWriter.println(CREATE_COURSES_TABLE_QUERY);
+    @Test
+    void readTableСreationQueryShouldReturnQueryWhenPreviousTableNameContainsCurrentTableName() throws IOException {
+        String createTable = "CREATE TABLE students_courses\n" + "(\n" + "   student_id INTEGER NOT NULL,\n" + ");";
 
-    String expectedResult = CREATE_COURSES_TABLE_QUERY;
+        createTableFileWriter.println(createTable);
+        createTableFileWriter.println(CREATE_COURSES_TABLE_QUERY);
 
-    String actualResult = new QueriesReader().readCreateTableQuery(FILE_NAME,
-        tableName);
+        String actualResult = new QueriesReader().readTableСreationQuery(FILE_NAME, COURSES_TABLE_NAME);
 
-    assertEquals(expectedResult, actualResult);
-  }
-
-  @Test
-  void readCreateTableQueryShouldReturnQueryWhenPreviousTableNameContainsCurrentTableName()
-    throws IOException {
-    String tableName = "courses";
-
-    createTableFileWriter.println("CREATE TABLE students_courses\n" + "(\n"
-        + "   student_id INTEGER NOT NULL,\n" + ");\n");
-
-    createTableFileWriter.println(CREATE_COURSES_TABLE_QUERY);
-
-    String expectedResult = CREATE_COURSES_TABLE_QUERY;
-
-    String actualResult = new QueriesReader().readCreateTableQuery(FILE_NAME,
-        tableName);
-
-    assertEquals(expectedResult, actualResult);
-  }
+        assertEquals(CREATE_COURSES_TABLE_QUERY, actualResult);
+    }
 }

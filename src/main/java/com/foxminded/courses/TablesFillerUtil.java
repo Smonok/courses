@@ -1,146 +1,172 @@
 package com.foxminded.courses;
 
-import java.io.IOException;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
 
-public class TablesFillerUtil {
-  private static final String TABLES_CREATOR_FILE = "create_tables_query.sql";
+public final class TablesFillerUtil {
+    private static final String TABLES_CREATOR_FILE = "create_tables_query.sql";
+    private static HashSet<Integer> studentsId = new HashSet<>();
+    private static HashSet<Integer> coursesId = new HashSet<>();
+    private static HashSet<Integer> groupsId = new HashSet<>();
 
-  public static void fillAllTables(Statement statement) throws SQLException,
-    IOException {
-    fillGroupsTable(statement);
-    fillCoursesTable(statement);
-    fillStudentsTable(statement);
-    fillStudentsCoursesTable(statement);
-  }
-
-  private static void fillGroupsTable(Statement statement) throws SQLException,
-    IOException {
-    createTable(statement, "groups");
-
-    for (int i = 0; i < DatabaseConstants.GROUPS_NUMBER; i++) {
-      String groupName = generateGroupName();
-      String insertQuery = String.format(
-          "INSERT INTO groups (group_id, group_name) VALUES (%d, '%s');", i + 1,
-          groupName);
-      statement.executeUpdate(insertQuery);
-    }
-  }
-
-  private static String generateGroupName() {
-    String data = "ABCDEFGHIJK";
-    int firstCharIndex = getRandomNumber(0, data.length() - 1);
-    int secondCharIndex = getRandomNumber(0, data.length() - 1);
-    int groupNumber = getRandomNumber(10, 99);
-
-    return String.format("%c%c-%d", data.charAt(firstCharIndex), data.charAt(
-        secondCharIndex), groupNumber);
-  }
-
-  private static void fillCoursesTable(Statement statement) throws SQLException,
-    IOException {
-    createTable(statement, "courses");
-
-    for (int i = 0; i < DatabaseConstants.COURSES_NUMBER; i++) {
-      String insertQuery = String.format(
-          "INSERT INTO courses (course_id, course_name, course_description) VALUES (%d, '%s', '%s');",
-          i + 1, DatabaseConstants.COURSE_NAMES[i], "");
-      statement.executeUpdate(insertQuery);
-    }
-  }
-
-  private static void fillStudentsTable(Statement statement)
-    throws SQLException, IOException {
-    createTable(statement, "students");
-
-    for (int i = 0; i < DatabaseConstants.STUDENTS_NUMBER; i++) {
-      int groupId = getRandomNumber(1, 10);
-      int firstNameIndex = getRandomNumber(0, DatabaseConstants.FIRST_NAMES.length - 1);
-      int lastNameIndex = getRandomNumber(0, DatabaseConstants.LAST_NAMES.length - 1);
-
-      String insertQuery = String.format(
-          "INSERT INTO students (student_id, group_id, first_name, last_name) VALUES (%d, %d, '%s', '%s');",
-          i + 1, groupId, DatabaseConstants.FIRST_NAMES[firstNameIndex],
-          DatabaseConstants.LAST_NAMES[lastNameIndex]);
-
-      statement.executeUpdate(insertQuery);
-    }
-  }
-
-  private static void fillStudentsCoursesTable(Statement statement)
-    throws SQLException, IOException {
-    createTable(statement, "students_courses");
-
-    insertCoursesForEachStudent(statement);
-  }
-
-  private static void insertCoursesForEachStudent(Statement statement)
-    throws SQLException {
-    List<Integer> courses = new ArrayList<>();
-
-    for (int i = 1; i <= DatabaseConstants.COURSES_NUMBER; i++) {
-      courses.add(i);
+    static void fillAllTables(Statement statement) {
+        try {
+            fillGroupsTable(statement);
+            fillCoursesTable(statement);
+            fillStudentsTable(statement);
+            fillStudentsCoursesTable(statement);
+        } catch (SQLException e) {
+            InitializerUtil.log.error(e.getMessage());
+        }
     }
 
-    for (int i = 0; i < DatabaseConstants.STUDENTS_NUMBER; i++) {
-      insertCoursesForOneStudent(statement, i + 1, courses);
+    static boolean doesStudentExists(int id) {
+        return studentsId.contains(id);
     }
-  }
 
-  private static void insertCoursesForOneStudent(Statement statement,
-    int studentId, List<Integer> courses) {
-    int coursesPerStudent = getRandomNumber(1, 3);
-    Collections.shuffle(courses);
+    static boolean doesGroupExists(int id) {
+        return groupsId.contains(id);
+    }
 
-    courses.stream().filter(course -> courses.indexOf(
-        course) < coursesPerStudent).forEach(courseId -> {
-          String insertQuery = String.format(
-              "INSERT INTO students_courses (student_id, course_id) VALUES (%d, %d);",
-              studentId, courseId);
+    static boolean doesCourseExists(int id) {
+        return coursesId.contains(id);
+    }
 
-          try {
-            statement.executeUpdate(insertQuery);
-          } catch (SQLException e) {
-            e.printStackTrace();
-          }
+    static void fillGroupsTable(Statement statement) throws SQLException {
+        createTable(statement, "groups");
+
+        for (int i = 0; i < DatabaseConstants.GROUPS_NUMBER; i++) {
+            String groupName = generateGroupName();
+            String insertGroup = String.format(DatabaseConstants.INSERT_GROUP, i + 1, groupName);
+            try {
+                statement.executeUpdate(insertGroup);
+                groupsId.add(i + 1);
+            } catch (SQLException e) {
+                InitializerUtil.log.error("Cannot fill group table", e);
+                throw new SQLException("Cannot fill group table", e);
+            }
+        }
+    }
+
+    private static String generateGroupName() {
+        String data = "ABCDEFGHIJK";
+        int firstCharIndex = getRandomNumber(0, data.length() - 1);
+        int secondCharIndex = getRandomNumber(0, data.length() - 1);
+        int groupNumber = getRandomNumber(10, 99);
+
+        return String.format("%c%c-%d", data.charAt(firstCharIndex), data.charAt(secondCharIndex), groupNumber);
+    }
+
+    static void fillCoursesTable(Statement statement) throws SQLException {
+        createTable(statement, "courses");
+
+        for (int i = 0; i < DatabaseConstants.COURSES_NUMBER; i++) {
+            String insertCourse = String.format(DatabaseConstants.INSERT_COURSE, i + 1, DatabaseConstants.COURSE_NAMES[i],
+                            "");
+            try {
+                statement.executeUpdate(insertCourse);
+                coursesId.add(i + 1);
+            } catch (SQLException e) {
+                InitializerUtil.log.error("Cannot fill courses table", e);
+                throw new SQLException("Cannot fill courses table", e);
+            }
+        }
+    }
+
+    static void fillStudentsTable(Statement statement) throws SQLException {
+        createTable(statement, "students");
+
+        for (int i = 0; i < DatabaseConstants.STUDENTS_NUMBER; i++) {
+            int groupId = getRandomNumber(1, 10);
+            int firstNameIndex = getRandomNumber(0, DatabaseConstants.FIRST_NAMES.length - 1);
+            int lastNameIndex = getRandomNumber(0, DatabaseConstants.LAST_NAMES.length - 1);
+
+            String insertStudent = String.format(DatabaseConstants.INSERT_STUDENT, i + 1,
+                            DatabaseConstants.FIRST_NAMES[firstNameIndex], DatabaseConstants.LAST_NAMES[lastNameIndex],
+                            groupId);
+
+            try {
+                statement.executeUpdate(insertStudent);
+                studentsId.add(i + 1);
+            } catch (SQLException e) {
+                InitializerUtil.log.error("Cannot fill students table", e);
+                throw new SQLException("Cannot fill students table", e);
+            }
+        }
+    }
+
+    static void fillStudentsCoursesTable(Statement statement) throws SQLException {
+        createTable(statement, "students_courses");
+
+        insertCoursesForEachStudent(statement);
+    }
+
+    private static void insertCoursesForEachStudent(Statement statement) throws SQLException {
+        List<Integer> courses = new ArrayList<>();
+
+        for (int i = 1; i <= DatabaseConstants.COURSES_NUMBER; i++) {
+            courses.add(i);
+        }
+
+        for (int i = 0; i < DatabaseConstants.STUDENTS_NUMBER; i++) {
+            insertCoursesForOneStudent(statement, i + 1, courses);
+        }
+    }
+
+    private static void insertCoursesForOneStudent(Statement statement, int studentId, List<Integer> courses) {
+        int coursesPerStudent = getRandomNumber(1, 3);
+        Collections.shuffle(courses);
+
+        courses.stream().filter(course -> courses.indexOf(course) < coursesPerStudent).forEach(courseId -> {
+            String addCourseForStudent = String.format(DatabaseConstants.INSERT_STUDENT_COURSE, studentId, courseId);
+
+            try {
+                statement.executeUpdate(addCourseForStudent);
+            } catch (SQLException e) {
+                InitializerUtil.log.error("Cannot add courses for student", e);
+            }
+
         });
-  }
-
-  private static int getRandomNumber(int min, int max) {
-    if (min >= max) {
-      throw new IllegalArgumentException("max must be greater than min");
     }
 
-    return new Random().ints(min, max + 1).findFirst().orElse(min);
-  }
+    private static int getRandomNumber(int min, int max) {
+        if (min >= max) {
+            throw new IllegalArgumentException("max must be greater than min");
+        }
 
-  private static void createTable(Statement statement, String tableName)
-    throws IOException {
-    QueriesReader reader = new QueriesReader();
-    String createQuery = reader.readCreateTableQuery(TABLES_CREATOR_FILE,
-        tableName);
-
-    try {
-      dropTable(statement, tableName);
-      statement.executeUpdate(createQuery);
-    } catch (SQLException e) {
-      e.printStackTrace();
+        return new Random().ints(min, max + 1).findFirst().orElse(min);
     }
-  }
 
-  private static void dropTable(Statement statement, String tableName) {
-    String dropQuery = "DROP TABLE IF EXISTS " + tableName + " CASCADE;";
+    private static void createTable(Statement statement, String tableName) throws SQLException {
+        QueriesReader reader = new QueriesReader();
+        String createTable = reader.readTableСreationQuery(TABLES_CREATOR_FILE, tableName);
 
-    try {
-      statement.executeUpdate(dropQuery);
-    } catch (SQLException e) {
-      e.printStackTrace();
+        dropTable(statement, tableName);
+        try {
+            statement.executeUpdate(createTable);
+        } catch (SQLException e) {
+            InitializerUtil.log.error("Cannot create %s table", tableName, e);
+            throw new SQLException("Cannot create table", e);
+        }
     }
-  }
 
+    private static void dropTable(Statement statement, String tableName) throws SQLException {
+        String dropTable = String.format(DatabaseConstants.DROP_TABLE, tableName);
+
+        try {
+            statement.executeUpdate(dropTable);
+        } catch (SQLException e) {
+            InitializerUtil.log.error("Cannot drop %s table", tableName, e);
+            throw new SQLException("Cannot drop table", e);
+        }
+    }
+
+    private TablesFillerUtil() {
+        throw new UnsupportedOperationException();
+    }
 }
