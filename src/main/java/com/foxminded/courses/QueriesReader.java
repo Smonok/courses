@@ -11,11 +11,15 @@ import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.StringJoiner;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class QueriesReader {
     private final ClassLoader loader = QueriesReader.class.getClassLoader();
     private boolean isTableFound = false;
     private int tableBeginIndex;
     private int tableEndIndex;
+    private final Logger LOG = LoggerFactory.getLogger(QueriesReader.class);
 
     public String readTableСreationQuery(String fileName, String tableName) {
         File sql = initializeFile(fileName);
@@ -23,13 +27,14 @@ public class QueriesReader {
         try {
             sqlLines = new ArrayList<>(Files.readAllLines(Paths.get(sql.getAbsolutePath())));
         } catch (IOException e) {
-            InitializerUtil.log.error("Cannot read %s file", fileName);
+            LOG.error("Cannot read " + fileName + " file");
         }
         StringJoiner query = new StringJoiner("\n");
 
         findTableBeginIndex(sqlLines, tableName);
         findTableEndIndex(sqlLines);
         if (!isTableFound) {
+            LOG.error("NoSuchElementException: Table " + tableName + " not found in '" + fileName + "'");
             throw new NoSuchElementException("Table " + tableName + " not found in '" + fileName + "'");
         }
 
@@ -47,19 +52,23 @@ public class QueriesReader {
     }
 
     private void findTableBeginIndex(List<String> sqlLines, String tableName) {
-        final int tableNameIndex = 2;
+        final int queryTableNameIndex = 2;
 
         sqlLines.stream()
             .filter(line -> line.toUpperCase().contains("TABLE"))
                 .forEach(line -> {
                         String[] startQueryWords = line.split(DatabaseConstants.SPACES_OR_BRACKET);
+                        String queryTableName = startQueryWords[queryTableNameIndex];
 
-                        if (tableName.equals(startQueryWords[tableNameIndex])) {
-                            tableBeginIndex = sqlLines.indexOf(line);
-                            isTableFound = true;
-                            return;
-                        }
+                        fillTableBeginIndexIfTableFound(tableName, queryTableName, sqlLines.indexOf(line));
                     });
+    }
+
+    private void fillTableBeginIndexIfTableFound(String tableName, String queryTableName, int currentLineIndex) {
+        if (tableName.equals(queryTableName)) {
+            tableBeginIndex = currentLineIndex;
+            isTableFound = true;
+        }
     }
 
     private void findTableEndIndex(List<String> sqlLines) {

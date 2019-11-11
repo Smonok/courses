@@ -4,8 +4,12 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class StudentsController {
     private ResultSet resultSet;
+    private final Logger LOG = LoggerFactory.getLogger(StudentsController.class);
 
     ResultSet printGroupsAndStudentsNumber(Statement statement, int studentsNumber, int lessOrEquals)
         throws SQLException {
@@ -24,8 +28,8 @@ public class StudentsController {
                 }
             }
         } catch (SQLException e) {
-            InitializerUtil.log.error("Cannot find all groups with entered student numbers.", e);
-            throw new SQLException("Cannot find all groups with entered student numbers.", e);
+            LOG.error("Cannot find all groups with " + studentsNumber + " students.", e);
+            throw e;
         }
 
         return resultSet;
@@ -56,8 +60,8 @@ public class StudentsController {
                 System.out.println(id + ". " + firstName + " " + lastName);
             }
         } catch (SQLException e) {
-            InitializerUtil.log.error("Cannot find student related to course.", e);
-            throw new SQLException("Cannot find student related to course.", e);
+            LOG.error("Cannot find student related to " + courseId + " course.", e);
+            throw e;
         }
 
         return resultSet;
@@ -77,8 +81,8 @@ public class StudentsController {
                             groupId));
             System.out.println("Student added successfully");
         } catch (SQLException e) {
-            InitializerUtil.log.error("Cannot add new student.", e);
-            throw new SQLException("Cannot add new student.", e);
+            LOG.error("Cannot add new student: " + firstName + " " + lastName + ", group ID = " + groupId, e);
+            throw e;
         }
     }
 
@@ -88,8 +92,8 @@ public class StudentsController {
             statement.executeUpdate(deleteStudent);
             System.out.println("Student successfully deleted");
         } catch (SQLException e) {
-            InitializerUtil.log.error("Cannot delete selected student.", e);
-            throw new SQLException("Cannot delete selected student.", e);
+            LOG.error("Cannot delete student with ID = " + studentId, e);
+            throw e;
         }
     }
 
@@ -100,8 +104,8 @@ public class StudentsController {
             statement.executeUpdate(addCourseForStudent);
             System.out.println("Course added successfully");
         } catch (SQLException e) {
-            InitializerUtil.log.error("Cannot add student to course.", e);
-            throw new SQLException("Cannot add student to course.", e);
+            LOG.error("Cannot add student with ID = " + studentId + " to " + courseId + " course.", e);
+            throw e;
         }
     }
 
@@ -112,8 +116,8 @@ public class StudentsController {
             statement.executeUpdate(deleteStudentCourse);
             System.out.println("Course deleted successfully");
         } catch (SQLException e) {
-            InitializerUtil.log.error("Cannot remove student from course.", e);
-            throw new SQLException("Cannot remove student from course.", e);
+            LOG.error("Cannot remove student with ID = " + studentId + " from " + courseId + " course.", e);
+            throw e;
         }
     }
 }

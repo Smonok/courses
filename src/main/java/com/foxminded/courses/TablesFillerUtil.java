@@ -8,11 +8,15 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public final class TablesFillerUtil {
     private static final String TABLES_CREATOR_FILE = "create_tables_query.sql";
     private static HashSet<Integer> studentsId = new HashSet<>();
     private static HashSet<Integer> coursesId = new HashSet<>();
     private static HashSet<Integer> groupsId = new HashSet<>();
+    private final static Logger LOG = LoggerFactory.getLogger(TablesFillerUtil.class);
 
     static void fillAllTables(Statement statement) {
         try {
@@ -21,7 +25,7 @@ public final class TablesFillerUtil {
             fillStudentsTable(statement);
             fillStudentsCoursesTable(statement);
         } catch (SQLException e) {
-            InitializerUtil.log.error(e.getMessage());
+            LOG.error(e.getMessage());
         }
     }
 
@@ -47,8 +51,8 @@ public final class TablesFillerUtil {
                 statement.executeUpdate(insertGroup);
                 groupsId.add(i + 1);
             } catch (SQLException e) {
-                InitializerUtil.log.error("Cannot fill group table", e);
-                throw new SQLException("Cannot fill group table", e);
+                LOG.error("Cannot fill group table", e);
+                throw e;
             }
         }
     }
@@ -66,14 +70,14 @@ public final class TablesFillerUtil {
         createTable(statement, "courses");
 
         for (int i = 0; i < DatabaseConstants.COURSES_NUMBER; i++) {
-            String insertCourse = String.format(DatabaseConstants.INSERT_COURSE, i + 1, DatabaseConstants.COURSE_NAMES[i],
-                            "");
+            String insertCourse = String.format(DatabaseConstants.INSERT_COURSE, i + 1,
+                            DatabaseConstants.COURSE_NAMES[i], "");
             try {
                 statement.executeUpdate(insertCourse);
                 coursesId.add(i + 1);
             } catch (SQLException e) {
-                InitializerUtil.log.error("Cannot fill courses table", e);
-                throw new SQLException("Cannot fill courses table", e);
+                LOG.error("Cannot fill courses table", e);
+                throw e;
             }
         }
     }
@@ -94,8 +98,8 @@ public final class TablesFillerUtil {
                 statement.executeUpdate(insertStudent);
                 studentsId.add(i + 1);
             } catch (SQLException e) {
-                InitializerUtil.log.error("Cannot fill students table", e);
-                throw new SQLException("Cannot fill students table", e);
+                LOG.error("Cannot fill students table", e);
+                throw e;
             }
         }
     }
@@ -128,7 +132,7 @@ public final class TablesFillerUtil {
             try {
                 statement.executeUpdate(addCourseForStudent);
             } catch (SQLException e) {
-                InitializerUtil.log.error("Cannot add courses for student", e);
+                LOG.error("Cannot add courses for student", e);
             }
 
         });
@@ -136,6 +140,7 @@ public final class TablesFillerUtil {
 
     private static int getRandomNumber(int min, int max) {
         if (min >= max) {
+            LOG.error("IllegalArgumentException: max must be greater than min");
             throw new IllegalArgumentException("max must be greater than min");
         }
 
@@ -150,8 +155,8 @@ public final class TablesFillerUtil {
         try {
             statement.executeUpdate(createTable);
         } catch (SQLException e) {
-            InitializerUtil.log.error("Cannot create %s table", tableName, e);
-            throw new SQLException("Cannot create table", e);
+            LOG.error("Cannot create " + tableName + " table", e);
+            throw e;
         }
     }
 
@@ -161,8 +166,8 @@ public final class TablesFillerUtil {
         try {
             statement.executeUpdate(dropTable);
         } catch (SQLException e) {
-            InitializerUtil.log.error("Cannot drop %s table", tableName, e);
-            throw new SQLException("Cannot drop table", e);
+            LOG.error("Cannot drop " + tableName + " table", e);
+            throw e;
         }
     }
 
