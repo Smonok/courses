@@ -1,5 +1,7 @@
 package com.foxminded.courses;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
@@ -12,34 +14,36 @@ import java.util.Objects;
 import java.util.StringJoiner;
 
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class QueriesReader {
-    private final ClassLoader loader = QueriesReader.class.getClassLoader();
+    private static final ClassLoader loader = QueriesReader.class.getClassLoader();
+    private static final Logger LOG = getLogger(QueriesReader.class);
     private boolean isTableFound = false;
     private int tableBeginIndex;
     private int tableEndIndex;
-    private final Logger LOG = LoggerFactory.getLogger(QueriesReader.class);
 
-    public String readTableСreationQuery(String fileName, String tableName) {
+    public String createTable(String fileName, String tableName) {
         File sql = initializeFile(fileName);
         List<String> sqlLines = null;
+
         try {
             sqlLines = new ArrayList<>(Files.readAllLines(Paths.get(sql.getAbsolutePath())));
         } catch (IOException e) {
-            LOG.error("Cannot read " + fileName + " file");
+            LOG.error("Cannot read {} file", fileName);
         }
         StringJoiner query = new StringJoiner("\n");
 
         findTableBeginIndex(sqlLines, tableName);
         findTableEndIndex(sqlLines);
         if (!isTableFound) {
-            LOG.error("NoSuchElementException: Table " + tableName + " not found in '" + fileName + "'");
-            throw new NoSuchElementException("Table " + tableName + " not found in '" + fileName + "'");
+            final String exceptionMessage = String.format("Table %s not found in '%s'", tableName, fileName);
+            throw new NoSuchElementException(exceptionMessage);
         }
 
-        for (int i = tableBeginIndex; i <= tableEndIndex; i++) {
-            query.add(sqlLines.get(i));
+        if(sqlLines != null) {
+            for (int i = tableBeginIndex; i <= tableEndIndex; i++) {
+                query.add(sqlLines.get(i));
+            }
         }
 
         return query.toString();
@@ -47,21 +51,22 @@ public class QueriesReader {
 
     private File initializeFile(String fileName) {
         URL url = Objects.requireNonNull(loader.getResource(fileName));
-
         return new File(url.getFile());
     }
 
     private void findTableBeginIndex(List<String> sqlLines, String tableName) {
-        final int queryTableNameIndex = 2;
+        final int tableNameIndex = 2;
 
-        sqlLines.stream()
-            .filter(line -> line.toUpperCase().contains("TABLE"))
-                .forEach(line -> {
-                        String[] startQueryWords = line.split(DatabaseConstants.SPACES_OR_BRACKET);
-                        String queryTableName = startQueryWords[queryTableNameIndex];
+        if(sqlLines != null) {
+            sqlLines.stream()
+                .filter(line -> line.toUpperCase().contains("TABLE"))
+                    .forEach(line -> {
+                            String[] startQueryWords = line.split(DatabaseConstants.SPACES_OR_BRACKET);
+                            String queryTableName = startQueryWords[tableNameIndex];
 
-                        fillTableBeginIndexIfTableFound(tableName, queryTableName, sqlLines.indexOf(line));
-                    });
+                            fillTableBeginIndexIfTableFound(tableName, queryTableName, sqlLines.indexOf(line));
+                        });
+        }
     }
 
     private void fillTableBeginIndexIfTableFound(String tableName, String queryTableName, int currentLineIndex) {
@@ -72,10 +77,12 @@ public class QueriesReader {
     }
 
     private void findTableEndIndex(List<String> sqlLines) {
-        for (int i = tableBeginIndex; i < sqlLines.size(); i++) {
-            if (sqlLines.get(i).contains(";")) {
-                tableEndIndex = i;
-                return;
+        if(sqlLines != null) {
+            for (int i = tableBeginIndex; i < sqlLines.size(); i++) {
+                if (sqlLines.get(i).contains(";")) {
+                    tableEndIndex = i;
+                    return;
+                }
             }
         }
     }

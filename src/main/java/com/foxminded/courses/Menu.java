@@ -1,118 +1,125 @@
 package com.foxminded.courses;
 
-import java.sql.ResultSet;
+import static org.slf4j.LoggerFactory.getLogger;
+
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.InputMismatchException;
 import java.util.Scanner;
 
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class Menu {
-    private final Scanner scanner = new Scanner(System.in);
-    private ResultSet resultSet;
-    private final String WRONG_INPUT_MESSAGE = "Error! The entered number does not match any of the proposed";
-    private boolean isExit = false;
-    private static final StudentsController controller = new StudentsController();
-    private final Logger LOG = LoggerFactory.getLogger(Menu.class);
+    private static final String WRONG_INPUT_MESSAGE = "Error! The entered number is not match any of the proposed";
+    private static final String EXPECTED_INTEGER_MESSAGE = "Expected integer";
+    private static final Scanner scanner = new Scanner(System.in);
+    private static final DataController controller = new DataController();
+    private static final DataPrinter printer = new DataPrinter();
+    private static final Logger LOG = getLogger(Menu.class);
+    private static boolean isExit = false;
 
-    void workWithApplication(Statement statement) {
+    static void workWithApplication(Statement statement) {
         displayMenu();
         workWithInput(statement);
         if (!isExit) {
-            System.out.println("Work with the database was finished");
+            LOG.info("Work with the database was finished");
         }
     }
 
-    private void displayMenu() {
-        System.out.println("1. Enter 1 to find all groups with less or equals students count");
-        System.out.println("2. Enter 2 to find all students related to course with given name");
-        System.out.println("3. Enter 3 to add new student");
-        System.out.println("4. Enter 4 to delete student by student id");
-        System.out.println("5. Enter 5 to add a student to the course");
-        System.out.println("6. Enter 6 to remove the student from one of his or her courses");
-        System.out.println("7. Enter 7 for exit");
+    private static void displayMenu() {
+        LOG.info("1. Enter 1 to find all groups with less or equals students count");
+        LOG.info("2. Enter 2 to find all students related to course with given name");
+        LOG.info("3. Enter 3 to add new student");
+        LOG.info("4. Enter 4 to delete student by student id");
+        LOG.info("5. Enter 5 to add a student to the course");
+        LOG.info("6. Enter 6 to remove the student from one of his or her courses");
+        LOG.info("7. Enter 7 for exit");
     }
 
-    private void workWithInput(Statement statement) {
-        System.out.print("You choose: ");
-        int input = 0;
+    private static void workWithInput(Statement statement) {
+        LOG.info("You choose: ");
 
         try {
-            input = scanner.nextInt();
+            int input = scanner.nextInt();
             switch (input) {
                 case (1):
-                    printGroupsAndStudentsNumberByEnteredData(statement);
+                    printGroupsWithStudentsCount(statement);
                     break;
                 case (2):
-                    printStudentsRelatedToCourseByEnteredCourse(statement);
+                    printStudentsRelatedToCourse(statement);
                     break;
                 case (3):
                     addStudentByEnteredData(statement);
                     break;
                 case (4):
-                    deleteStudentByEnteredId(statement);
+                    deleteStudentById(statement);
                     break;
                 case (5):
-                    addCourseToStudentByEnteredData(statement);
+                    addStudentToCourse(statement);
                     break;
                 case (6):
-                    removeStudentFromCourseByEnteredData(statement);
+                    removeStudentFromCourse(statement);
                     break;
                 case (7):
-                    System.out.println("Work with the database was finished");
+                    LOG.info("Work with the database was finished");
                     isExit = true;
                     break;
                 default:
-                    System.out.println(WRONG_INPUT_MESSAGE);
-                    System.out.println("Try again");
-                    workWithInput(statement);
+                    startFromTheBeginning(statement);
                     break;
             }
         } catch (SQLException e) {
-            LOG.error("SQLException: " + e.getMessage());
+            LOG.error("SQLException: {}", e.getMessage());
         } catch (InputMismatchException e1) {
-            LOG.error(e1 + ": expected integer!");
+            LOG.error(EXPECTED_INTEGER_MESSAGE, e1);
         }
     }
 
-    private void printGroupsAndStudentsNumberByEnteredData(Statement statement) throws SQLException {
+    private static void printGroupsWithStudentsCount(Statement statement) throws SQLException {
         int studentsNumber = enterNumberToCompareStudents();
-        int lessOrEquals = chooseHowCompareGroups(statement, studentsNumber);
+        int lessOrEquals = chooseHowCompareGroups(studentsNumber);
 
         if (lessOrEquals == 1 || lessOrEquals == 2) {
-            controller.printGroupsAndStudentsNumber(statement, studentsNumber, lessOrEquals);
+            printer.printGroupsAndStudentsNumber(statement, studentsNumber, lessOrEquals);
         } else {
             startFromTheBeginning(statement);
         }
     }
 
-    private int enterNumberToCompareStudents() {
-        System.out.print("Enter the number with which you will compare the number of students: ");
-        return scanner.nextInt();
+    private static int enterNumberToCompareStudents() {
+        LOG.info("Enter the number with which you will compare the number of students: ");
+
+        try {
+            return scanner.nextInt();
+        } catch (InputMismatchException e) {
+            throw new InputMismatchException(EXPECTED_INTEGER_MESSAGE);
+        }
     }
 
-    private int chooseHowCompareGroups(Statement statement, int number) {
-        System.out.println("-> Enter 1 if you want to find groups with students count less then " + number);
-        System.out.println("-> Enter 2 if you want to find groups with students count that equals " + number);
-        System.out.print("-> You choose: ");
-        int input = scanner.nextInt();
+    private static int chooseHowCompareGroups(int number) {
+        LOG.info("-> Enter 1 if you want to find groups with students count less then {}", number);
+        LOG.info("-> Enter 2 if you want to find groups with students count that equals {}", number);
+        LOG.info("-> You choose: ");
 
-        return input;
+        try {
+            return scanner.nextInt();
+        } catch (InputMismatchException e) {
+            throw new InputMismatchException(EXPECTED_INTEGER_MESSAGE);
+        }
+
     }
 
-    private void printStudentsRelatedToCourseByEnteredCourse(Statement statement) throws SQLException {
+    private static void printStudentsRelatedToCourse(Statement statement) throws SQLException {
         int courseId = enterCourseIdFromList(statement);
 
-        if (TablesFillerUtil.doesCourseExists(courseId)) {
-            controller.printStudentsRelatedToCourse(statement, courseId);
+        if (TablesUtil.isCourseExists(courseId)) {
+            printer.printStudentsRelatedToCourse(statement, courseId);
         } else {
             startFromTheBeginning(statement);
         }
     }
 
-    private void addStudentByEnteredData(Statement statement) throws SQLException {
+    private static void addStudentByEnteredData(Statement statement) throws SQLException {
         String firstName = enterName("first");
         scanner.nextLine();
         String lastName = enterName("last");
@@ -121,54 +128,39 @@ public class Menu {
         controller.addStudent(statement, firstName, lastName, groupId);
     }
 
-    private String enterName(String nameNumber) {
-        System.out.print("Enter student's " + nameNumber + " name: ");
+    private static String enterName(String nameNumber) {
+        LOG.info("Enter student's {} name: ", nameNumber);
         return scanner.nextLine();
     }
 
-    private int enterGroupIdFromList(Statement statement) throws SQLException {
-        printAllGroups(statement);
+    private static int enterGroupIdFromList(Statement statement) throws SQLException {
+        printer.printAllGroups(statement);
 
-        System.out.print("Enter student's group: ");
-        return scanner.nextInt();
-    }
-
-    private void printAllGroups(Statement statement) throws SQLException {
+        LOG.info("Enter student's group: ");
         try {
-            resultSet = statement.executeQuery(DatabaseConstants.ALL_GROUPS);
-            printParsedGroupsInfo(resultSet);
-        } catch (SQLException e) {
-            LOG.error("Cannot print all groups.", e);
-            throw e;
+            return scanner.nextInt();
+        } catch (InputMismatchException e) {
+            throw new InputMismatchException(EXPECTED_INTEGER_MESSAGE);
         }
     }
 
-    private void printParsedGroupsInfo(ResultSet resultSet) throws SQLException {
-        while (resultSet.next()) {
-            String groupName = resultSet.getString("group_name");
-            int id = resultSet.getInt("group_id");
-
-            System.out.println(id + ". " + groupName);
-        }
-    }
-
-    private void deleteStudentByEnteredId(Statement statement) throws SQLException {
+    private static void deleteStudentById(Statement statement) throws SQLException {
         int sudentId = enterStudentIdFromList(statement);
 
-        if (TablesFillerUtil.doesStudentExists(sudentId)) {
+        if (TablesUtil.isStudentExists(sudentId)) {
             controller.deleteStudentById(statement, sudentId);
         } else {
             startFromTheBeginning(statement);
         }
     }
 
-    private void addCourseToStudentByEnteredData(Statement statement) throws SQLException {
+    private static void addStudentToCourse(Statement statement) throws SQLException {
         int studentId = enterStudentIdFromList(statement);
 
-        if (TablesFillerUtil.doesStudentExists(studentId)) {
+        if (TablesUtil.isStudentExists(studentId)) {
             int courseId = enterCourseIdFromList(statement);
 
-            if (TablesFillerUtil.doesCourseExists(courseId)) {
+            if (TablesUtil.isCourseExists(courseId)) {
                 controller.addCourseToStudent(statement, studentId, courseId);
             } else {
                 startFromTheBeginning(statement);
@@ -178,91 +170,58 @@ public class Menu {
         }
     }
 
-    private int enterCourseIdFromList(Statement statement) throws SQLException {
-        printAllCourses(statement);
-        System.out.print("Enter the course id: ");
-        return scanner.nextInt();
-    }
-
-    private void printAllCourses(Statement statement) throws SQLException {
-        System.out.println("List of courses:");
-
+    private static int enterCourseIdFromList(Statement statement) throws SQLException {
+        printer.printAllCourses(statement);
+        LOG.info("Enter the course id: ");
         try {
-            resultSet = statement.executeQuery(DatabaseConstants.ALL_COURSES);
-            printParsedCoursesInfo(resultSet);
-        } catch (SQLException e) {
-            LOG.error("Cannot print all courses.", e);
-            throw e;
+            return scanner.nextInt();
+        } catch (InputMismatchException e) {
+            throw new InputMismatchException(EXPECTED_INTEGER_MESSAGE);
         }
     }
 
-    private void removeStudentFromCourseByEnteredData(Statement statement) throws SQLException {
+    private static void removeStudentFromCourse(Statement statement) throws SQLException {
         int studentId = enterStudentIdFromList(statement);
 
-        if (TablesFillerUtil.doesStudentExists(studentId)) {
-            printCoursesByStudentId(statement, studentId);
+        if (TablesUtil.isStudentExists(studentId)) {
+            printer.printCoursesByStudentId(statement, studentId);
 
-            System.out.print("Enter course id: ");
-            int course = scanner.nextInt();
+            LOG.info("Enter course id: ");
 
-            if (TablesFillerUtil.doesCourseExists(course)) {
-                controller.removeStudentFromCourse(statement, studentId, course);
-            } else {
-                startFromTheBeginning(statement);
+            try {
+                int course = scanner.nextInt();
+
+                if (TablesUtil.isCourseExists(course)) {
+                    controller.removeStudentFromCourse(statement, studentId, course);
+                } else {
+                    startFromTheBeginning(statement);
+                }
+            } catch (InputMismatchException e) {
+                throw new InputMismatchException(EXPECTED_INTEGER_MESSAGE);
             }
         } else {
             startFromTheBeginning(statement);
         }
     }
 
-    private int enterStudentIdFromList(Statement statement) throws SQLException {
-        printAllStudents(statement);
-        System.out.print("Enter student id: ");
-        return scanner.nextInt();
-    }
-
-    private void printAllStudents(Statement statement) throws SQLException {
+    private static int enterStudentIdFromList(Statement statement) throws SQLException {
+        printer.printAllStudents(statement);
+        LOG.info("Enter student id: ");
         try {
-            resultSet = statement.executeQuery(DatabaseConstants.ALL_STUDENTS);
-            printParsedStudentsInfo(resultSet);
-        } catch (SQLException e) {
-            LOG.error("Cannot print all students.", e);
-            throw e;
+            return scanner.nextInt();
+        } catch (InputMismatchException e) {
+            throw new InputMismatchException(EXPECTED_INTEGER_MESSAGE);
         }
     }
 
-    private void printParsedStudentsInfo(ResultSet resultSet) throws SQLException {
-        while (resultSet.next()) {
-            int id = resultSet.getInt("student_id");
-            String firstName = resultSet.getString("first_name");
-            String lastName = resultSet.getString("last_name");
-
-            System.out.println(id + ". " + firstName + " " + lastName);
-        }
-    }
-
-    private void printCoursesByStudentId(Statement statement, int studentId) throws SQLException {
-        System.out.println("His (her) courses:");
-
-        String studentCourses = String.format(DatabaseConstants.STUDENT_COURSES, studentId);
-        resultSet = statement.executeQuery(studentCourses);
-
-        printParsedCoursesInfo(resultSet);
-    }
-
-    private void printParsedCoursesInfo(ResultSet resultSet) throws SQLException {
-        while (resultSet.next()) {
-            int id = resultSet.getInt("course_id");
-            String name = resultSet.getString("course_name");
-
-            System.out.println(id + ". " + name);
-        }
-    }
-
-    private void startFromTheBeginning(Statement statement) {
-        System.out.println(WRONG_INPUT_MESSAGE);
-        System.out.println("Try again");
+    private static void startFromTheBeginning(Statement statement) {
+        LOG.info(WRONG_INPUT_MESSAGE);
+        LOG.info("Try again");
         displayMenu();
         workWithInput(statement);
+    }
+
+    private Menu() {
+        throw new IllegalStateException();
     }
 }

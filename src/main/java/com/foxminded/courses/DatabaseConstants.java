@@ -7,21 +7,6 @@ public final class DatabaseConstants {
 
     public static final String SPACES_OR_BRACKET = "\\s+|\\(";
 
-    public static final String[] FIRST_NAMES = {
-                    "Jacob", "Michael", "Matthew", "Joshua", "Christopher", "Nicholas", "Andrew", "Joseph", "Daniel",
-                    "Tyler", "William", "Brandon", "Ryan", "John", "Zachary", "David", "Anthony", "James", "Justin",
-                    "Alexander"
-    };
-    public static final String[] LAST_NAMES = {
-                    "Smith", "Johnson", "Williams", "Brown", "Jones", "Miller", "Davis", "Garcia", "Rodriguez",
-                    "Wilson", "Martinez", "Anderson", "Taylor", "Thomas", "Hernandez", "Moore", "Martin", "Jackson",
-                    "Thompson", "White"
-    };
-    public static final String[] COURSE_NAMES = {
-                    "math", "biology", "chemistry", "programming", "history", "geography", "music", "art", "algebra",
-                    "geometry"
-    };
-
     public static final String GROUPS_WITH_STUDENTS_COUNT = "SELECT students.group_id, group_name, COUNT(*) as count\n"
                     + "FROM  students\n" + "LEFT JOIN groups ON students.group_id = groups.group_id\n"
                     + "GROUP BY students.group_id, group_name\n" + "HAVING COUNT(*) %c %d;";
@@ -66,6 +51,21 @@ public final class DatabaseConstants {
                     + "WHERE student_id = %d AND course_id = %d;";
 
     public static final String DROP_TABLE = "DROP TABLE IF EXISTS %s CASCADE;";
+
+    protected static final String[] FIRST_NAMES = {
+                    "Jacob", "Michael", "Matthew", "Joshua", "Christopher", "Nicholas", "Andrew", "Joseph", "Daniel",
+                    "Tyler", "William", "Brandon", "Ryan", "John", "Zachary", "David", "Anthony", "James", "Justin",
+                    "Alexander"
+    };
+    protected static final String[] LAST_NAMES = {
+                    "Smith", "Johnson", "Williams", "Brown", "Jones", "Miller", "Davis", "Garcia", "Rodriguez",
+                    "Wilson", "Martinez", "Anderson", "Taylor", "Thomas", "Hernandez", "Moore", "Martin", "Jackson",
+                    "Thompson", "White"
+    };
+    protected static final String[] COURSE_NAMES = {
+                    "math", "biology", "chemistry", "programming", "history", "geography", "music", "art", "algebra",
+                    "geometry"
+    };
 
     private DatabaseConstants() {
         throw new AssertionError();
