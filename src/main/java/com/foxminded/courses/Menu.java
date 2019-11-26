@@ -1,32 +1,33 @@
 package com.foxminded.courses;
 
+import static com.foxminded.courses.DataSourceCustomizer.customizeDataSource;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.InputMismatchException;
 import java.util.Scanner;
 
 import org.slf4j.Logger;
 
 public class Menu {
-    private static final String WRONG_INPUT_MESSAGE = "Error! The entered number is not match any of the proposed";
+    private static final String WRONG_INPUT_MESSAGE = "Error! Wrong input";
     private static final String EXPECTED_INTEGER_MESSAGE = "Expected integer";
+
     private static final Scanner scanner = new Scanner(System.in);
-    private static final DataController controller = new DataController();
-    private static final DataPrinter printer = new DataPrinter();
+    private static final DBDataHandler handler = new DBDataHandler(customizeDataSource());
+    private static final DBDataSelector selector = new DBDataSelector(customizeDataSource());
     private static final Logger LOG = getLogger(Menu.class);
+
     private static boolean isExit = false;
 
-    static void workWithApplication(Statement statement) {
-        displayMenu();
-        workWithInput(statement);
+    public static void workWithApplication() {
+        startMenu();
         if (!isExit) {
             LOG.info("Work with the database was finished");
         }
     }
 
-    private static void displayMenu() {
+    private static void startMenu() {
         LOG.info("1. Enter 1 to find all groups with less or equals students count");
         LOG.info("2. Enter 2 to find all students related to course with given name");
         LOG.info("3. Enter 3 to add new student");
@@ -34,55 +35,57 @@ public class Menu {
         LOG.info("5. Enter 5 to add a student to the course");
         LOG.info("6. Enter 6 to remove the student from one of his or her courses");
         LOG.info("7. Enter 7 for exit");
+
+        workWithInput();
     }
 
-    private static void workWithInput(Statement statement) {
+    private static void workWithInput() {
         LOG.info("You choose: ");
 
         try {
             int input = scanner.nextInt();
             switch (input) {
                 case (1):
-                    printGroupsWithStudentsCount(statement);
+                    printGroupsWithStudentsCount();
                     break;
                 case (2):
-                    printStudentsRelatedToCourse(statement);
+                    printStudentsByCourse();
                     break;
                 case (3):
-                    addStudentByEnteredData(statement);
+                    addStudent();
                     break;
                 case (4):
-                    deleteStudentById(statement);
+                    deleteStudentById();
                     break;
                 case (5):
-                    addStudentToCourse(statement);
+                    addStudentToCourse();
                     break;
                 case (6):
-                    removeStudentFromCourse(statement);
+                    removeStudentFromCourse();
                     break;
                 case (7):
                     LOG.info("Work with the database was finished");
                     isExit = true;
                     break;
                 default:
-                    startFromTheBeginning(statement);
+                    startFromTheBeginning();
                     break;
             }
         } catch (SQLException e) {
-            LOG.error("SQLException: {}", e.getMessage());
+            LOG.error("SQLException: {}", e.getMessage(), e);
         } catch (InputMismatchException e1) {
             LOG.error(EXPECTED_INTEGER_MESSAGE, e1);
         }
     }
 
-    private static void printGroupsWithStudentsCount(Statement statement) throws SQLException {
+    private static void printGroupsWithStudentsCount() throws SQLException {
         int studentsNumber = enterNumberToCompareStudents();
         int lessOrEquals = chooseHowCompareGroups(studentsNumber);
 
         if (lessOrEquals == 1 || lessOrEquals == 2) {
-            printer.printGroupsAndStudentsNumber(statement, studentsNumber, lessOrEquals);
+            LOG.info(selector.selectGroupsWithStudentsNumber(studentsNumber, lessOrEquals));
         } else {
-            startFromTheBeginning(statement);
+            startFromTheBeginning();
         }
     }
 
@@ -106,35 +109,39 @@ public class Menu {
         } catch (InputMismatchException e) {
             throw new InputMismatchException(EXPECTED_INTEGER_MESSAGE);
         }
-
     }
 
-    private static void printStudentsRelatedToCourse(Statement statement) throws SQLException {
-        int courseId = enterCourseIdFromList(statement);
+    private static void printStudentsByCourse() throws SQLException {
+        int courseId = enterCourseIdFromList();
 
-        if (TablesUtil.isCourseExists(courseId)) {
-            printer.printStudentsRelatedToCourse(statement, courseId);
+        if (handler.isCourseExists(courseId)) {
+            LOG.info(selector.selectStudentsByCourse(courseId));
         } else {
-            startFromTheBeginning(statement);
+            startFromTheBeginning();
         }
     }
 
-    private static void addStudentByEnteredData(Statement statement) throws SQLException {
-        String firstName = enterName("first");
+    private static void addStudent() throws SQLException {
+        String firstName = enterName();
         scanner.nextLine();
-        String lastName = enterName("last");
-        int groupId = enterGroupIdFromList(statement);
+        String lastName = enterSurname();
+        int groupId = enterGroupIdFromList();
 
-        controller.addStudent(statement, firstName, lastName, groupId);
+        handler.addStudent(firstName, lastName, groupId);
     }
 
-    private static String enterName(String nameNumber) {
-        LOG.info("Enter student's {} name: ", nameNumber);
+    private static String enterName() {
+        LOG.info("Enter student's first name: ");
         return scanner.nextLine();
     }
 
-    private static int enterGroupIdFromList(Statement statement) throws SQLException {
-        printer.printAllGroups(statement);
+    private static String enterSurname() {
+        LOG.info("Enter student's last name: ");
+        return scanner.nextLine();
+    }
+
+    private static int enterGroupIdFromList() throws SQLException {
+        LOG.info(selector.selectAllGroups());
 
         LOG.info("Enter student's group: ");
         try {
@@ -144,34 +151,36 @@ public class Menu {
         }
     }
 
-    private static void deleteStudentById(Statement statement) throws SQLException {
-        int sudentId = enterStudentIdFromList(statement);
+    private static void deleteStudentById() throws SQLException {
+        int studentId = enterStudentIdFromList();
 
-        if (TablesUtil.isStudentExists(sudentId)) {
-            controller.deleteStudentById(statement, sudentId);
+        if (handler.isStudentExists(studentId)) {
+            handler.deleteStudentById(studentId);
         } else {
-            startFromTheBeginning(statement);
+            startFromTheBeginning();
         }
     }
 
-    private static void addStudentToCourse(Statement statement) throws SQLException {
-        int studentId = enterStudentIdFromList(statement);
+    private static void addStudentToCourse() throws SQLException {
+        int studentId = enterStudentIdFromList();
 
-        if (TablesUtil.isStudentExists(studentId)) {
-            int courseId = enterCourseIdFromList(statement);
+        if (handler.isStudentExists(studentId)) {
+            LOG.info(selector.selectCoursesByStudentId(studentId));
 
-            if (TablesUtil.isCourseExists(courseId)) {
-                controller.addCourseToStudent(statement, studentId, courseId);
+            int courseId = enterCourseIdFromList();
+            if (!handler.isStudentHasCourse(studentId, courseId)) {
+                handler.addCourseToStudent(studentId, courseId);
             } else {
-                startFromTheBeginning(statement);
+                LOG.info("Error! This student already has choosen course");
+                startFromTheBeginning();
             }
         } else {
-            startFromTheBeginning(statement);
+            startFromTheBeginning();
         }
     }
 
-    private static int enterCourseIdFromList(Statement statement) throws SQLException {
-        printer.printAllCourses(statement);
+    private static int enterCourseIdFromList() throws SQLException {
+        LOG.info(selector.selectAllCourses());
         LOG.info("Enter the course id: ");
         try {
             return scanner.nextInt();
@@ -180,32 +189,32 @@ public class Menu {
         }
     }
 
-    private static void removeStudentFromCourse(Statement statement) throws SQLException {
-        int studentId = enterStudentIdFromList(statement);
+    private static void removeStudentFromCourse() throws SQLException {
+        int studentId = enterStudentIdFromList();
 
-        if (TablesUtil.isStudentExists(studentId)) {
-            printer.printCoursesByStudentId(statement, studentId);
+        if (handler.isStudentExists(studentId)) {
+            LOG.info(selector.selectCoursesByStudentId(studentId));
 
             LOG.info("Enter course id: ");
 
             try {
-                int course = scanner.nextInt();
+                int courseId = scanner.nextInt();
 
-                if (TablesUtil.isCourseExists(course)) {
-                    controller.removeStudentFromCourse(statement, studentId, course);
+                if (handler.isStudentHasCourse(studentId, courseId)) {
+                    handler.removeStudentFromCourse(studentId, courseId);
                 } else {
-                    startFromTheBeginning(statement);
+                    startFromTheBeginning();
                 }
             } catch (InputMismatchException e) {
                 throw new InputMismatchException(EXPECTED_INTEGER_MESSAGE);
             }
         } else {
-            startFromTheBeginning(statement);
+            startFromTheBeginning();
         }
     }
 
-    private static int enterStudentIdFromList(Statement statement) throws SQLException {
-        printer.printAllStudents(statement);
+    private static int enterStudentIdFromList() throws SQLException {
+        LOG.info(selector.selectAllStudents());
         LOG.info("Enter student id: ");
         try {
             return scanner.nextInt();
@@ -214,11 +223,10 @@ public class Menu {
         }
     }
 
-    private static void startFromTheBeginning(Statement statement) {
+    private static void startFromTheBeginning() {
         LOG.info(WRONG_INPUT_MESSAGE);
         LOG.info("Try again");
-        displayMenu();
-        workWithInput(statement);
+        startMenu();
     }
 
     private Menu() {
