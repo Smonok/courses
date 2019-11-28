@@ -19,9 +19,8 @@ public class TablesController {
         String createTable = reader.createTable(CREATE_TABLE_FILE, tableName);
 
         try (Connection connection = dataSource.getConnection();
-                        Statement statement = connection.createStatement()) {
+                    Statement statement = connection.createStatement()) {
             dropTable(statement, tableName);
-
             statement.executeUpdate(createTable);
         } catch (SQLException e) {
             throw new SQLException("Cannot create " + tableName + " table", e);

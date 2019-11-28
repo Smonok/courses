@@ -1,6 +1,6 @@
 package com.foxminded.courses;
 
-import static com.foxminded.courses.DataSourceCustomizer.customizeDataSource;
+import static com.foxminded.courses.DataSourceConfig.getDataSource;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.sql.SQLException;
@@ -9,13 +9,18 @@ import java.util.Scanner;
 
 import org.slf4j.Logger;
 
+import com.foxminded.courses.dao.CoursesDao;
+import com.foxminded.courses.dao.GroupsDao;
+import com.foxminded.courses.dao.StudentsDao;
+
 public class Menu {
     private static final String WRONG_INPUT_MESSAGE = "Error! Wrong input";
     private static final String EXPECTED_INTEGER_MESSAGE = "Expected integer";
 
     private static final Scanner scanner = new Scanner(System.in);
-    private static final DBDataHandler handler = new DBDataHandler(customizeDataSource());
-    private static final DBDataSelector selector = new DBDataSelector(customizeDataSource());
+    private static final GroupsDao groups = new GroupsDao(getDataSource());
+    private static final StudentsDao students = new StudentsDao(getDataSource());
+    private static final CoursesDao courses = new CoursesDao(getDataSource());
     private static final Logger LOG = getLogger(Menu.class);
 
     private static boolean isExit = false;
@@ -83,7 +88,7 @@ public class Menu {
         int lessOrEquals = chooseHowCompareGroups(studentsNumber);
 
         if (lessOrEquals == 1 || lessOrEquals == 2) {
-            LOG.info(selector.selectGroupsWithStudentsNumber(studentsNumber, lessOrEquals));
+            LOG.info(groups.selectGroupsWithStudentsNumber(studentsNumber, lessOrEquals));
         } else {
             startFromTheBeginning();
         }
@@ -114,8 +119,8 @@ public class Menu {
     private static void printStudentsByCourse() throws SQLException {
         int courseId = enterCourseIdFromList();
 
-        if (handler.isCourseExists(courseId)) {
-            LOG.info(selector.selectStudentsByCourse(courseId));
+        if (courses.isCourseExists(courseId)) {
+            LOG.info(students.selectStudentsByCourse(courseId));
         } else {
             startFromTheBeginning();
         }
@@ -127,7 +132,7 @@ public class Menu {
         String lastName = enterSurname();
         int groupId = enterGroupIdFromList();
 
-        handler.addStudent(firstName, lastName, groupId);
+        students.addStudent(firstName, lastName, groupId);
     }
 
     private static String enterName() {
@@ -141,7 +146,7 @@ public class Menu {
     }
 
     private static int enterGroupIdFromList() throws SQLException {
-        LOG.info(selector.selectAllGroups());
+        LOG.info(groups.selectAllGroups());
 
         LOG.info("Enter student's group: ");
         try {
@@ -154,8 +159,8 @@ public class Menu {
     private static void deleteStudentById() throws SQLException {
         int studentId = enterStudentIdFromList();
 
-        if (handler.isStudentExists(studentId)) {
-            handler.deleteStudentById(studentId);
+        if (students.isStudentExists(studentId)) {
+            students.deleteStudentById(studentId);
         } else {
             startFromTheBeginning();
         }
@@ -164,12 +169,12 @@ public class Menu {
     private static void addStudentToCourse() throws SQLException {
         int studentId = enterStudentIdFromList();
 
-        if (handler.isStudentExists(studentId)) {
-            LOG.info(selector.selectCoursesByStudentId(studentId));
+        if (students.isStudentExists(studentId)) {
+            LOG.info(courses.selectCoursesByStudentId(studentId));
 
             int courseId = enterCourseIdFromList();
-            if (!handler.isStudentHasCourse(studentId, courseId)) {
-                handler.addCourseToStudent(studentId, courseId);
+            if (!courses.isStudentHasCourse(studentId, courseId)) {
+                courses.addStudentToCourse(studentId, courseId);
             } else {
                 LOG.info("Error! This student already has choosen course");
                 startFromTheBeginning();
@@ -180,7 +185,7 @@ public class Menu {
     }
 
     private static int enterCourseIdFromList() throws SQLException {
-        LOG.info(selector.selectAllCourses());
+        LOG.info(courses.selectAllCourses());
         LOG.info("Enter the course id: ");
         try {
             return scanner.nextInt();
@@ -192,16 +197,16 @@ public class Menu {
     private static void removeStudentFromCourse() throws SQLException {
         int studentId = enterStudentIdFromList();
 
-        if (handler.isStudentExists(studentId)) {
-            LOG.info(selector.selectCoursesByStudentId(studentId));
+        if (students.isStudentExists(studentId)) {
+            LOG.info(courses.selectCoursesByStudentId(studentId));
 
             LOG.info("Enter course id: ");
 
             try {
                 int courseId = scanner.nextInt();
 
-                if (handler.isStudentHasCourse(studentId, courseId)) {
-                    handler.removeStudentFromCourse(studentId, courseId);
+                if (courses.isStudentHasCourse(studentId, courseId)) {
+                    courses.removeStudentFromCourse(studentId, courseId);
                 } else {
                     startFromTheBeginning();
                 }
@@ -214,7 +219,7 @@ public class Menu {
     }
 
     private static int enterStudentIdFromList() throws SQLException {
-        LOG.info(selector.selectAllStudents());
+        LOG.info(students.selectAllStudents());
         LOG.info("Enter student id: ");
         try {
             return scanner.nextInt();

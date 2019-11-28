@@ -13,32 +13,32 @@ import javax.sql.DataSource;
 
 import org.slf4j.Logger;
 
-public class TablesFiller {
-    private static final Logger LOG = getLogger(TablesFiller.class);
+public class TablesInitializer {
+    private static final Logger LOG = getLogger(TablesInitializer.class);
     private final TablesController tablesController;
     private DataSource dataSource;
 
-    public TablesFiller(DataSource dataSource) {
+    public TablesInitializer(DataSource dataSource) {
         this.dataSource = dataSource;
         tablesController = new TablesController(dataSource);
     }
 
-    public void fillAllTables() {
+    public void initTables() {
         try {
-            fillGroupsTable();
-            fillCoursesTable();
-            fillStudentsTable();
-            fillStudentsCoursesTable();
+            initGroupsTable();
+            initCoursesTable();
+            initStudentsTable();
+            initStudentsCoursesTable();
         } catch (SQLException e) {
             LOG.error(e.getMessage(), e);
         }
     }
 
-    public void fillGroupsTable() throws SQLException {
+    public void initGroupsTable() throws SQLException {
         tablesController.createTable("groups");
 
         try (Connection connection = dataSource.getConnection();
-                        Statement statement = connection.createStatement()) {
+                    Statement statement = connection.createStatement()) {
             for (int i = 0; i < DatabaseConstants.GROUPS_NUMBER; i++) {
                 String groupName = generateGroupName();
                 String insertGroup = String.format(DatabaseConstants.INSERT_GROUP, i + 1, groupName);
@@ -46,7 +46,7 @@ public class TablesFiller {
                 addGroup(statement, insertGroup);
             }
         } catch (SQLException e) {
-            throw new SQLException("Cannot fill groups table", e);
+            throw new SQLException("Cannot initialize groups table", e);
         }
     }
 
@@ -67,19 +67,19 @@ public class TablesFiller {
         }
     }
 
-    public void fillCoursesTable() throws SQLException {
+    public void initCoursesTable() throws SQLException {
         tablesController.createTable("courses");
 
         try (Connection connection = dataSource.getConnection();
-                        Statement statement = connection.createStatement()) {
+                    Statement statement = connection.createStatement()) {
             for (int i = 0; i < DatabaseConstants.COURSES_NUMBER; i++) {
                 String insertCourse = String.format(DatabaseConstants.INSERT_COURSE, i + 1,
-                                DatabaseConstants.COURSE_NAMES[i], "");
+                            DatabaseConstants.COURSE_NAMES[i], "");
 
                 addCourse(statement, insertCourse);
             }
         } catch (SQLException e) {
-            throw new SQLException("Cannot fill courses table", e);
+            throw new SQLException("Cannot initialize courses table", e);
         }
     }
 
@@ -91,24 +91,24 @@ public class TablesFiller {
         }
     }
 
-    public void fillStudentsTable() throws SQLException {
+    public void initStudentsTable() throws SQLException {
         tablesController.createTable("students");
 
         try (Connection connection = dataSource.getConnection();
-                        Statement statement = connection.createStatement()) {
+                    Statement statement = connection.createStatement()) {
             for (int i = 0; i < DatabaseConstants.STUDENTS_NUMBER; i++) {
                 int groupId = RandomizerUtil.getRandomNumberBetween(1, 10);
                 int firstNameIndex = RandomizerUtil.getRandomNumberBetween(0, DatabaseConstants.FIRST_NAMES.length - 1);
                 int lastNameIndex = RandomizerUtil.getRandomNumberBetween(0, DatabaseConstants.LAST_NAMES.length - 1);
 
                 String insertStudent = String.format(DatabaseConstants.INSERT_STUDENT, i + 1,
-                                DatabaseConstants.FIRST_NAMES[firstNameIndex],
-                                DatabaseConstants.LAST_NAMES[lastNameIndex], groupId);
+                            DatabaseConstants.FIRST_NAMES[firstNameIndex], DatabaseConstants.LAST_NAMES[lastNameIndex],
+                            groupId);
 
                 addStudent(statement, insertStudent);
             }
         } catch (SQLException e) {
-            throw new SQLException("Cannot fill students table", e);
+            throw new SQLException("Cannot initialize students table", e);
         }
     }
 
@@ -120,14 +120,14 @@ public class TablesFiller {
         }
     }
 
-    public void fillStudentsCoursesTable() throws SQLException {
+    public void initStudentsCoursesTable() throws SQLException {
         tablesController.createTable("students_courses");
 
         try (Connection connection = dataSource.getConnection();
-                        Statement statement = connection.createStatement()) {
+                    Statement statement = connection.createStatement()) {
             insertCoursesForEachStudent(statement);
         } catch (SQLException e) {
-            throw new SQLException("Cannot fill students courses table", e);
+            throw new SQLException("Cannot initialize students courses table", e);
         }
     }
 
@@ -147,11 +147,14 @@ public class TablesFiller {
         int coursesPerStudent = RandomizerUtil.getRandomNumberBetween(1, 3);
         Collections.shuffle(courses);
 
-        courses.stream().filter(course -> courses.indexOf(course) < coursesPerStudent).forEach(courseId -> {
-            String insertCourseForStudent = String.format(DatabaseConstants.INSERT_STUDENT_COURSE, studentId, courseId);
+        courses.stream()
+            .filter(course -> courses.indexOf(course) < coursesPerStudent)
+                .forEach(courseId -> {
+                    String insertCourseForStudent = String.format(DatabaseConstants.INSERT_STUDENT_COURSE,
+                                studentId, courseId);
 
-            addCourseForStudent(statement, insertCourseForStudent);
-        });
+                    addCourseForStudent(statement, insertCourseForStudent);
+                });
     }
 
     private void addCourseForStudent(Statement statement, String insertQuery) {

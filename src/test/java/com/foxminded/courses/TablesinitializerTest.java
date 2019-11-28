@@ -12,7 +12,7 @@ import org.h2.jdbcx.JdbcDataSource;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
-class TablesFillerTest {
+class TablesinitializerTest {
     private static final JdbcDataSource dataSource = new JdbcDataSource();
     private static final String TWO_UPPER_CASE_LETTERS = "[A-Z]{2}";
     private static final String HYPHEN_AND_TWO_DIGITS = "\\-\\d{2}";
@@ -24,7 +24,7 @@ class TablesFillerTest {
     private static final String SELECT_STUDENTS_NUMBER = "SELECT COUNT (DISTINCT student_id) AS count FROM students;";
     private static final String SELECT_SORTED_COURSES_NUMBER = "SELECT student_id, COUNT(student_id) AS courses_count\n"
                     + "FROM students_courses\n" + "GROUP BY student_id\n" + "ORDER BY courses_count DESC;";
-    private static TablesFiller filler;
+    private static TablesInitializer initializer;
     private ResultSet resultSet;
 
     @BeforeAll
@@ -32,12 +32,12 @@ class TablesFillerTest {
         dataSource.setURL("jdbc:h2:mem:estest;DB_CLOSE_DELAY=-1");
         dataSource.setUser("sa");
 
-        filler = new TablesFiller(dataSource);
+        initializer = new TablesInitializer(dataSource);
     }
 
     @Test
-    void fillGroupsTableShouldCreateTenGroups() throws SQLException {
-       filler.fillGroupsTable();
+    void initGroupsTableShouldCreateTenGroups() throws SQLException {
+       initializer.initGroupsTable();
 
        try (Connection connection = dataSource.getConnection();
                    Statement statement = connection.createStatement()) {
@@ -53,8 +53,8 @@ class TablesFillerTest {
     }
 
     @Test
-    void fillGroupsTableShouldCreateGroupNameWhereFirstTwoCharactersAreUpperCaseLetters() throws SQLException {
-        filler.fillGroupsTable();
+    void initGroupsTableShouldCreateGroupNameWhereFirstTwoCharactersAreUpperCaseLetters() throws SQLException {
+        initializer.initGroupsTable();
 
         try (Connection connection = dataSource.getConnection();
                     Statement statement = connection.createStatement()) {
@@ -72,8 +72,8 @@ class TablesFillerTest {
     }
 
     @Test
-    void fillGroupsTableShouldCreateGroupNameWhereLastCharactestAreHyphenAndTwoDigits() throws SQLException {
-        filler.fillGroupsTable();
+    void initGroupsTableShouldCreateGroupNameWhereLastCharactestAreHyphenAndTwoDigits() throws SQLException {
+        initializer.initGroupsTable();
 
         try (Connection connection = dataSource.getConnection();
                     Statement statement = connection.createStatement()) {
@@ -91,8 +91,8 @@ class TablesFillerTest {
     }
 
     @Test
-    void fillCoursesTableShouldCreateTenCourses() throws SQLException {
-        filler.fillCoursesTable();
+    void initCoursesTableShouldCreateTenCourses() throws SQLException {
+        initializer.initCoursesTable();
 
         try (Connection connection = dataSource.getConnection();
                     Statement statement = connection.createStatement()) {
@@ -109,8 +109,8 @@ class TablesFillerTest {
     }
 
     @Test
-    void fillStudentsTableShouldCreateTwoHundredStudents() throws SQLException {
-        filler.fillStudentsTable();
+    void initStudentsTableShouldCreateTwoHundredStudents() throws SQLException {
+        initializer.initStudentsTable();
 
         try (Connection connection = dataSource.getConnection();
                     Statement statement = connection.createStatement()) {
@@ -126,10 +126,10 @@ class TablesFillerTest {
     }
 
     @Test
-    void fillStudentsCoursesTableShouldAssignForEachStudentFromOneToThreeCourses() throws SQLException {
-        filler.fillStudentsTable();
-        filler.fillCoursesTable();
-        filler.fillStudentsCoursesTable();
+    void initStudentsCoursesTableShouldAssignForEachStudentFromOneToThreeCourses() throws SQLException {
+        initializer.initStudentsTable();
+        initializer.initCoursesTable();
+        initializer.initStudentsCoursesTable();
 
         try (Connection connection = dataSource.getConnection();
                     Statement statement = connection.createStatement()) {
