@@ -25,8 +25,8 @@ class CoursesDaoTest {
                 + "FROM students_courses\n" + "LEFT JOIN courses ON students_courses.course_id = courses.course_id\n"
                 + "GROUP BY students_courses.course_id, course_name,  students_courses.student_id\n"
                 + "HAVING students_courses.student_id = 1;";
-    private static final String FIRST_STUDENT_COURSES_ID = "SELECT course_id FROM students_courses "
-                + "WHERE student_id = 1;";
+    private static final String STUDENT_COURSES_ID = "SELECT course_id FROM students_courses "
+                + "WHERE student_id = %d;";
     private static final String COURSE_ID = "course_id";
     private static final String COURSE_NAME = "course_name";
     private static final JdbcDataSource dataSource = new JdbcDataSource();
@@ -43,16 +43,17 @@ class CoursesDaoTest {
         initializer = new TablesInitializer(dataSource);
         courses = new CoursesDao(dataSource);
 
-        initializer.initCoursesTable();
+        initializer.initTables();
         initFirstStudentCourses();
     }
 
     private static void initFirstStudentCourses() throws SQLException {
         try (Connection connection = dataSource.getConnection();
                     Statement statement = connection.createStatement()) {
-            resultSet = statement.executeQuery(FIRST_STUDENT_COURSES_ID);
+            resultSet = statement.executeQuery(String.format(STUDENT_COURSES_ID, 1));
             while (resultSet.next()) {
-                firstStudentCourses.add(resultSet.getInt(COURSE_ID));
+                int courseId = resultSet.getInt(COURSE_ID);
+                firstStudentCourses.add(courseId);
             }
         } catch (SQLException e) {
             throw new SQLException();
@@ -109,15 +110,18 @@ class CoursesDaoTest {
 
     @Test
     void addStudentToCourseShouldThrowSQLExceptionWhenStudentAlreadyHasCourse() throws SQLException {
-        int studentId = 1;
+        int studentId = 2;
 
-        for (int i = 1; i <= DatabaseConstants.COURSES_NUMBER; i++) {
-            if (firstStudentCourses.contains(i)) {
-                final int EXISTING_COURSE_ID = i;
+        try (Connection connection = dataSource.getConnection();
+                    Statement statement = connection.createStatement()) {
+            resultSet = statement.executeQuery(String.format(STUDENT_COURSES_ID, studentId));
+            resultSet.next();
 
-                assertThrows(SQLException.class, () -> courses.addStudentToCourse(studentId, EXISTING_COURSE_ID));
-                break;
-            }
+            int existingCourseId = resultSet.getInt(COURSE_ID);
+
+            assertThrows(SQLException.class, () -> courses.addStudentToCourse(studentId, existingCourseId));
+        } catch (SQLException e) {
+            throw new SQLException();
         }
     }
 

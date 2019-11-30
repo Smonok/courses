@@ -128,7 +128,6 @@ public class Menu {
 
     private static void addStudent() throws SQLException {
         String firstName = enterName();
-        scanner.nextLine();
         String lastName = enterSurname();
         int groupId = enterGroupIdFromList();
 
@@ -137,6 +136,7 @@ public class Menu {
 
     private static String enterName() {
         LOG.info("Enter student's first name: ");
+        scanner.nextLine();
         return scanner.nextLine();
     }
 
@@ -176,7 +176,7 @@ public class Menu {
             if (!courses.isStudentHasCourse(studentId, courseId)) {
                 courses.addStudentToCourse(studentId, courseId);
             } else {
-                LOG.info("Error! This student already has choosen course");
+                LOG.info("Error! Student with id = {} is already in {} course.", studentId, courseId);
                 startFromTheBeginning();
             }
         } else {
