@@ -13,14 +13,17 @@ import javax.sql.DataSource;
 
 import org.slf4j.Logger;
 
+import com.foxminded.courses.dao.TablesDao;
+import com.foxminded.courses.util.RandomizerUtil;
+
 public class TablesInitializer {
     private static final Logger LOG = getLogger(TablesInitializer.class);
-    private final TablesController tablesController;
+    private final TablesDao tables;
     private DataSource dataSource;
 
     public TablesInitializer(DataSource dataSource) {
         this.dataSource = dataSource;
-        tablesController = new TablesController(dataSource);
+        tables = new TablesDao(dataSource);
     }
 
     public void initTables() {
@@ -35,10 +38,10 @@ public class TablesInitializer {
     }
 
     public void initGroupsTable() throws SQLException {
-        tablesController.createTable("groups");
+        tables.createTable("groups");
 
         try (Connection connection = dataSource.getConnection();
-                    Statement statement = connection.createStatement()) {
+            Statement statement = connection.createStatement()) {
             for (int i = 0; i < DatabaseConstants.GROUPS_NUMBER; i++) {
                 String groupName = generateGroupName();
                 String insertGroup = String.format(DatabaseConstants.INSERT_GROUP, i + 1, groupName);
@@ -46,7 +49,7 @@ public class TablesInitializer {
                 addGroup(statement, insertGroup);
             }
         } catch (SQLException e) {
-            throw new SQLException("Cannot initialize groups table", e);
+            throw new SQLException("Cannot initialize groups table\n", e);
         }
     }
 
@@ -63,23 +66,24 @@ public class TablesInitializer {
         try {
             statement.executeUpdate(insertQuery);
         } catch (SQLException e) {
-            throw new SQLException("Cannot add group to the DB", e);
+            throw new SQLException("Cannot add group to the DB\n" + insertQuery, e);
         }
     }
 
     public void initCoursesTable() throws SQLException {
-        tablesController.createTable("courses");
+        tables.createTable("courses");
 
         try (Connection connection = dataSource.getConnection();
-                    Statement statement = connection.createStatement()) {
+            Statement statement = connection.createStatement()) {
             for (int i = 0; i < DatabaseConstants.COURSES_NUMBER; i++) {
-                String insertCourse = String.format(DatabaseConstants.INSERT_COURSE, i + 1,
-                            DatabaseConstants.COURSE_NAMES[i], "");
+                String insertCourse = String.format(DatabaseConstants.INSERT_COURSE,
+                    i + 1,
+                    DatabaseConstants.COURSE_NAMES[i], "");
 
                 addCourse(statement, insertCourse);
             }
         } catch (SQLException e) {
-            throw new SQLException("Cannot initialize courses table", e);
+            throw new SQLException("Cannot initialize courses table\n", e);
         }
     }
 
@@ -87,28 +91,30 @@ public class TablesInitializer {
         try {
             statement.executeUpdate(insertQuery);
         } catch (SQLException e) {
-            throw new SQLException("Cannot add course to the DB", e);
+            throw new SQLException("Cannot add course to the DB\n" + insertQuery, e);
         }
     }
 
     public void initStudentsTable() throws SQLException {
-        tablesController.createTable("students");
+        tables.createTable("students");
 
         try (Connection connection = dataSource.getConnection();
-                    Statement statement = connection.createStatement()) {
+            Statement statement = connection.createStatement()) {
             for (int i = 0; i < DatabaseConstants.STUDENTS_NUMBER; i++) {
                 int groupId = RandomizerUtil.getRandomNumberBetween(1, 10);
                 int firstNameIndex = RandomizerUtil.getRandomNumberBetween(0, DatabaseConstants.FIRST_NAMES.length - 1);
                 int lastNameIndex = RandomizerUtil.getRandomNumberBetween(0, DatabaseConstants.LAST_NAMES.length - 1);
 
-                String insertStudent = String.format(DatabaseConstants.INSERT_STUDENT, i + 1,
-                            DatabaseConstants.FIRST_NAMES[firstNameIndex], DatabaseConstants.LAST_NAMES[lastNameIndex],
-                            groupId);
+                String insertStudent = String.format(DatabaseConstants.INSERT_STUDENT,
+                    i + 1,
+                    DatabaseConstants.FIRST_NAMES[firstNameIndex],
+                    DatabaseConstants.LAST_NAMES[lastNameIndex],
+                    groupId);
 
                 addStudent(statement, insertStudent);
             }
         } catch (SQLException e) {
-            throw new SQLException("Cannot initialize students table", e);
+            throw new SQLException("Cannot initialize students table\n", e);
         }
     }
 
@@ -116,18 +122,18 @@ public class TablesInitializer {
         try {
             statement.executeUpdate(insertQuery);
         } catch (SQLException e) {
-            throw new SQLException("Cannot add student to the DB", e);
+            throw new SQLException("Cannot add student to the DB\n" + insertQuery, e);
         }
     }
 
     public void initStudentsCoursesTable() throws SQLException {
-        tablesController.createTable("students_courses");
+        tables.createTable("students_courses");
 
         try (Connection connection = dataSource.getConnection();
-                    Statement statement = connection.createStatement()) {
+            Statement statement = connection.createStatement()) {
             insertCoursesForEachStudent(statement);
         } catch (SQLException e) {
-            throw new SQLException("Cannot initialize students courses table", e);
+            throw new SQLException("Cannot initialize students courses table\n", e);
         }
     }
 
@@ -161,8 +167,7 @@ public class TablesInitializer {
         try {
             statement.executeUpdate(insertQuery);
         } catch (SQLException e) {
-            LOG.error("Cannot add course for student", e);
+            LOG.error("Cannot add course for student\n{}", insertQuery, e);
         }
     }
-
 }

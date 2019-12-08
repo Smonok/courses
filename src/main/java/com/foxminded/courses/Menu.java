@@ -1,6 +1,6 @@
 package com.foxminded.courses;
 
-import static com.foxminded.courses.DataSourceConfig.getDataSource;
+import static com.foxminded.courses.config.DataSourceConfig.getDataSource;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.sql.SQLException;
@@ -15,7 +15,7 @@ import com.foxminded.courses.dao.StudentsDao;
 
 public class Menu {
     private static final String WRONG_INPUT_MESSAGE = "Error! Wrong input";
-    private static final String EXPECTED_INTEGER_MESSAGE = "Expected integer";
+    private static final String EXPECTED_INTEGER_MESSAGE = "Please, enter the number";
 
     private static final Scanner scanner = new Scanner(System.in);
     private static final GroupsDao groups = new GroupsDao(getDataSource());
@@ -88,7 +88,7 @@ public class Menu {
         int lessOrEquals = chooseHowCompareGroups(studentsNumber);
 
         if (lessOrEquals == 1 || lessOrEquals == 2) {
-            LOG.info(groups.selectGroupsWithStudentsNumber(studentsNumber, lessOrEquals));
+            LOG.info(groups.selectGroupsByStudentsNumber(studentsNumber, lessOrEquals));
         } else {
             startFromTheBeginning();
         }

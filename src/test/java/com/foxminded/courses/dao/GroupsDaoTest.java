@@ -17,25 +17,24 @@ class GroupsDaoTest {
     private static final String ERROR_MESSAGE = "No groups found";
     private static final JdbcDataSource dataSource = new JdbcDataSource();
     private static GroupsDao groups;
-    private static TablesInitializer initializer;
 
     @BeforeAll
     static void setUp() throws SQLException {
         dataSource.setURL("jdbc:h2:mem:estest;DB_CLOSE_DELAY=-1");
         dataSource.setUser("sa");
 
-        initializer = new TablesInitializer(dataSource);
+        TablesInitializer initializer = new TablesInitializer(dataSource);
         groups = new GroupsDao(dataSource);
 
         initializer.initGroupsTable();
     }
 
     @Test
-    void selectGroupsWithStudentsNumberShouldSelectNumberOfStudentsLessThanEnteredWhenOne() throws SQLException {
+    void selectGroupsByStudentsNumberShouldSelectNumberOfStudentsLessThanEnteredWhenOne() throws SQLException {
         int studentsNumber = 30;
         int lessOrEquals = 1;
 
-        String actualResult = groups.selectGroupsWithStudentsNumber(studentsNumber, lessOrEquals);
+        String actualResult = groups.selectGroupsByStudentsNumber(studentsNumber, lessOrEquals);
 
         String[] resultLines = actualResult.split(NEW_LINE);
 
@@ -49,26 +48,26 @@ class GroupsDaoTest {
     }
 
     @Test
-    void selectGroupsWithStudentsNumberShouldReturnErrorMessageWhenGroupsNotFound() throws SQLException {
+    void selectGroupsByStudentsNumberShouldReturnErrorMessageWhenGroupsNotFound() throws SQLException {
         int studentsNumber = 3;
         int lessOrEquals = 1;
 
-        String actualResult = groups.selectGroupsWithStudentsNumber(studentsNumber, lessOrEquals);
+        String actualResult = groups.selectGroupsByStudentsNumber(studentsNumber, lessOrEquals);
         assertEquals(ERROR_MESSAGE, actualResult);
 
         lessOrEquals = 2;
-        actualResult = groups.selectGroupsWithStudentsNumber(studentsNumber, lessOrEquals);
+        actualResult = groups.selectGroupsByStudentsNumber(studentsNumber, lessOrEquals);
         assertEquals(ERROR_MESSAGE, actualResult);
     }
 
     @Test
-    void selectGroupsWithStudentsNumberShouldSelectNumberOfStudentsEqualsToEnteredWhenTwo() throws SQLException {
+    void selectGroupsByStudentsNumberShouldSelectNumberOfStudentsEqualsToEnteredWhenTwo() throws SQLException {
         int studentsNumber = 23;
         int lessOrEquals = 2;
 
         final int lastCharactersNumber = 2;
 
-        String actualResult = groups.selectGroupsWithStudentsNumber(studentsNumber, lessOrEquals);
+        String actualResult = groups.selectGroupsByStudentsNumber(studentsNumber, lessOrEquals);
 
         if (!actualResult.equals(ERROR_MESSAGE)) {
             String[] resultLines = actualResult.split(NEW_LINE);

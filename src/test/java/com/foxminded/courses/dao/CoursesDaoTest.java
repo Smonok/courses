@@ -22,25 +22,23 @@ import com.foxminded.courses.TablesInitializer;
 
 class CoursesDaoTest {
     private static final String FIRST_STUDENT_COURSES = "SELECT students_courses.course_id, course_name\n"
-                + "FROM students_courses\n" + "LEFT JOIN courses ON students_courses.course_id = courses.course_id\n"
-                + "GROUP BY students_courses.course_id, course_name,  students_courses.student_id\n"
-                + "HAVING students_courses.student_id = 1;";
+        + "FROM students_courses\n" + "LEFT JOIN courses ON students_courses.course_id = courses.course_id\n"
+        + "GROUP BY students_courses.course_id, course_name,  students_courses.student_id\n"
+        + "HAVING students_courses.student_id = 1;";
     private static final String STUDENT_COURSES_ID = "SELECT course_id FROM students_courses "
-                + "WHERE student_id = %d;";
+        + "WHERE student_id = %d;";
     private static final String COURSE_ID = "course_id";
     private static final String COURSE_NAME = "course_name";
     private static final JdbcDataSource dataSource = new JdbcDataSource();
     private static final List<Integer> firstStudentCourses = new ArrayList<>();
     private static CoursesDao courses;
-    private static TablesInitializer initializer;
-    private static ResultSet resultSet;
 
     @BeforeAll
     static void setUp() throws SQLException {
         dataSource.setURL("jdbc:h2:mem:estest;DB_CLOSE_DELAY=-1");
         dataSource.setUser("sa");
 
-        initializer = new TablesInitializer(dataSource);
+        TablesInitializer initializer = new TablesInitializer(dataSource);
         courses = new CoursesDao(dataSource);
 
         initializer.initTables();
@@ -49,15 +47,18 @@ class CoursesDaoTest {
 
     private static void initFirstStudentCourses() throws SQLException {
         try (Connection connection = dataSource.getConnection();
-                    Statement statement = connection.createStatement()) {
-            resultSet = statement.executeQuery(String.format(STUDENT_COURSES_ID, 1));
+            Statement statement = connection.createStatement();
+            ResultSet resultSet = statement.executeQuery(selectStudentCourses(1))) {
+
             while (resultSet.next()) {
                 int courseId = resultSet.getInt(COURSE_ID);
                 firstStudentCourses.add(courseId);
             }
-        } catch (SQLException e) {
-            throw new SQLException();
         }
+    }
+
+    private static String selectStudentCourses(int studentId) {
+        return String.format(STUDENT_COURSES_ID, studentId);
     }
 
     @Test
@@ -74,8 +75,8 @@ class CoursesDaoTest {
         String actualResult = courses.selectCoursesByStudentId(studentId);
 
         try (Connection connection = dataSource.getConnection();
-                    Statement statement = connection.createStatement()) {
-            resultSet = statement.executeQuery(FIRST_STUDENT_COURSES);
+            Statement statement = connection.createStatement();
+            ResultSet resultSet = statement.executeQuery(FIRST_STUDENT_COURSES)) {
 
             while (resultSet.next()) {
                 int courseId = resultSet.getInt(COURSE_ID);
@@ -85,8 +86,6 @@ class CoursesDaoTest {
             }
 
             assertEquals(expectedResult.toString(), actualResult);
-        } catch (SQLException e) {
-            throw new SQLException();
         }
     }
 
@@ -100,7 +99,7 @@ class CoursesDaoTest {
     }
 
     @Test
-    void addStudentToCourseShouldThrowSQLExceptionWhenStudentDoesntExist() throws SQLException {
+    void addStudentToCourseShouldThrowSQLExceptionWhenStudentDoesntExist() {
         int courseId = 1;
 
         assertThrows(SQLException.class, () -> courses.addStudentToCourse(0, courseId));
@@ -113,15 +112,14 @@ class CoursesDaoTest {
         int studentId = 2;
 
         try (Connection connection = dataSource.getConnection();
-                    Statement statement = connection.createStatement()) {
-            resultSet = statement.executeQuery(String.format(STUDENT_COURSES_ID, studentId));
+            Statement statement = connection.createStatement();
+            ResultSet resultSet = statement.executeQuery(selectStudentCourses(studentId))) {
+
             resultSet.next();
 
             int existingCourseId = resultSet.getInt(COURSE_ID);
 
             assertThrows(SQLException.class, () -> courses.addStudentToCourse(studentId, existingCourseId));
-        } catch (SQLException e) {
-            throw new SQLException();
         }
     }
 
@@ -138,19 +136,18 @@ class CoursesDaoTest {
         }
 
         try (Connection connection = dataSource.getConnection();
-                    Statement statement = connection.createStatement()) {
+            Statement statement = connection.createStatement()) {
+
             courses.addStudentToCourse(studentId, courseId);
+            try (ResultSet resultSet = statement.executeQuery(FIRST_STUDENT_COURSES)) {
+                List<Integer> studentCourses = new ArrayList<>();
 
-            List<Integer> studentCourses = new ArrayList<>();
+                while (resultSet.next()) {
+                    studentCourses.add(resultSet.getInt(COURSE_ID));
+                }
 
-            resultSet = statement.executeQuery(FIRST_STUDENT_COURSES);
-            while (resultSet.next()) {
-                studentCourses.add(resultSet.getInt(COURSE_ID));
+                assertTrue(studentCourses.contains(courseId));
             }
-
-            assertTrue(studentCourses.contains(courseId));
-        } catch (SQLException e) {
-            throw new SQLException();
         }
     }
 
@@ -160,17 +157,16 @@ class CoursesDaoTest {
         int courseToDelete = firstStudentCourses.get(0);
 
         try (Connection connection = dataSource.getConnection();
-                    Statement statement = connection.createStatement()) {
+            Statement statement = connection.createStatement()) {
             courses.removeStudentFromCourse(studentId, courseToDelete);
 
-            resultSet = statement.executeQuery(FIRST_STUDENT_COURSES);
-            while (resultSet.next()) {
-                int courseId = resultSet.getInt(COURSE_ID);
+            try (ResultSet resultSet = statement.executeQuery(FIRST_STUDENT_COURSES)) {
+                while (resultSet.next()) {
+                    int courseId = resultSet.getInt(COURSE_ID);
 
-                assertNotEquals(courseToDelete, courseId);
+                    assertNotEquals(courseToDelete, courseId);
+                }
             }
-        } catch (SQLException e) {
-            throw new SQLException();
         }
     }
 }

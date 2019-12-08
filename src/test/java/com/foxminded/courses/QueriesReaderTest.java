@@ -53,7 +53,6 @@ class QueriesReaderTest {
 
     @Test
     void createTableShouldThrowNoSuchElementExceptionWhenEmptyFile() {
-
         assertThrows(NoSuchElementException.class, () -> new QueriesReader().createTable(FILE_NAME, GROUPS_TABLE_NAME));
     }
 

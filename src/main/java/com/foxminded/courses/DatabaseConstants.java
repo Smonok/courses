@@ -6,8 +6,10 @@ public final class DatabaseConstants {
     public static final int STUDENTS_NUMBER = 200;
 
     public static final String GROUPS_WITH_STUDENTS_COUNT = "SELECT students.group_id, group_name, COUNT(*) as count\n"
-                + "FROM  students\n" + "LEFT JOIN groups ON students.group_id = groups.group_id\n"
-                + "GROUP BY students.group_id, group_name\n" + "HAVING COUNT(*) %c %d;";
+                + "FROM  students\n"
+                + "LEFT JOIN groups ON students.group_id = groups.group_id\n"
+                + "GROUP BY students.group_id, group_name\n"
+                + "HAVING COUNT(*) %c %d;";
 
     public static final String STUDENTS_BY_COURSE = "SELECT students_courses.student_id, first_name, last_name\n"
                 + "FROM students_courses\n"
@@ -17,7 +19,8 @@ public final class DatabaseConstants {
                 + "HAVING courses.course_id = %d;";
 
     public static final String STUDENT_COURSES = "SELECT students_courses.course_id, course_name\n"
-                + "FROM students_courses\n" + "LEFT JOIN courses ON students_courses.course_id = courses.course_id\n"
+                + "FROM students_courses\n"
+                + "LEFT JOIN courses ON students_courses.course_id = courses.course_id\n"
                 + "GROUP BY students_courses.course_id, course_name,  students_courses.student_id\n"
                 + "HAVING students_courses.student_id = %d;";
 

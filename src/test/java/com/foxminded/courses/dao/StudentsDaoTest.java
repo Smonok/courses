@@ -29,19 +29,18 @@ class StudentsDaoTest {
     private static final String STUDENT_ID = "student_id";
     private static final String FIRST_NAME = "first_name";
     private static final String LAST_NAME = "last_name";
-    private static ResultSet resultSet;
     private static StudentsDao students;
-    private static TablesInitializer initializer;
 
     @BeforeAll
     static void setUp() throws SQLException {
         dataSource.setURL("jdbc:h2:mem:estest;DB_CLOSE_DELAY=-1");
         dataSource.setUser("sa");
 
-        initializer = new TablesInitializer(dataSource);
+        TablesInitializer initializer = new TablesInitializer(dataSource);
         students = new StudentsDao(dataSource);
 
         initializer.initStudentsTable();
+        initializer.initCoursesTable();
         initializer.initStudentsCoursesTable();
     }
 
@@ -60,18 +59,16 @@ class StudentsDaoTest {
 
         students.addStudent(firstName, lastName, groupId);
         try (Connection connection = dataSource.getConnection();
-                    Statement statement = connection.createStatement()) {
+            Statement statement = connection.createStatement();
+            ResultSet resultSet = statement.executeQuery(SELECT_STUDENTS_ID)) {
             int expectedLastId = DatabaseConstants.STUDENTS_NUMBER + 1;
             int actualLastId = 0;
 
-            resultSet = statement.executeQuery(SELECT_STUDENTS_ID);
             while (resultSet.next()) {
                 actualLastId = resultSet.getInt(STUDENT_ID);
             }
 
             assertEquals(expectedLastId, actualLastId);
-        } catch (SQLException e) {
-            throw new SQLException();
         }
     }
 
@@ -80,17 +77,16 @@ class StudentsDaoTest {
         int studentId = 1;
 
         try (Connection connection = dataSource.getConnection();
-                    Statement statement = connection.createStatement()) {
+            Statement statement = connection.createStatement()) {
+
             students.deleteStudentById(studentId);
+            try(ResultSet resultSet = statement.executeQuery(SELECT_STUDENTS_ID)){
+                resultSet.next();
+                int actualFirstId = resultSet.getInt(STUDENT_ID);
+                int expectedFirstId = 2;
 
-            resultSet = statement.executeQuery(SELECT_STUDENTS_ID);
-            resultSet.next();
-            int actualFirstId = resultSet.getInt(STUDENT_ID);
-            int expectedFirstId = 2;
-
-            assertEquals(expectedFirstId, actualFirstId);
-        } catch (SQLException e) {
-            throw new SQLException();
+                assertEquals(expectedFirstId, actualFirstId);
+            }
         }
     }
 
@@ -108,8 +104,8 @@ class StudentsDaoTest {
         String actualResult = students.selectStudentsByCourse(courseId);
 
         try (Connection connection = dataSource.getConnection();
-                    Statement statement = connection.createStatement()) {
-            resultSet = statement.executeQuery(STUDENTS_BY_MATH_COURSE);
+            Statement statement = connection.createStatement();
+            ResultSet resultSet = statement.executeQuery(STUDENTS_BY_MATH_COURSE)) {
 
             while (resultSet.next()) {
                 int studentId = resultSet.getInt(STUDENT_ID);
@@ -120,8 +116,6 @@ class StudentsDaoTest {
             }
 
             assertEquals(expectedResult.toString(), actualResult);
-        } catch (SQLException e) {
-            throw new SQLException();
         }
     }
 }

@@ -19,21 +19,21 @@ public class QueriesReader {
     private static final String SPACES_OR_BRACKET = "\\s+|\\(";
     private static final ClassLoader loader = QueriesReader.class.getClassLoader();
     private static final Logger LOG = getLogger(QueriesReader.class);
-    private boolean isTableFound = false;
+    private boolean isTableFound;
     private int tableBeginIndex;
     private int tableEndIndex;
 
     public String createTable(String fileName, String tableName) {
         List<String> sqlLines = readFile(fileName);
 
-        StringJoiner query = new StringJoiner("\n");
-
         findTableBeginIndex(sqlLines, tableName);
         findTableEndIndex(sqlLines);
+
         if (!isTableFound) {
             throw new NoSuchElementException("Table " + tableName + " not found in '" + fileName + "'");
         }
 
+        StringJoiner query = new StringJoiner("\n");
         for (int i = tableBeginIndex; i <= tableEndIndex; i++) {
             query.add(sqlLines.get(i));
         }
@@ -61,20 +61,24 @@ public class QueriesReader {
         final int tableNameIndex = 2;
 
         sqlLines.stream()
-            .filter(line -> line.toUpperCase().contains("TABLE"))
+            .filter(line -> line.toUpperCase().contains("TABLE") && !isTableFound)
                 .forEach(line -> {
                     String[] startQueryWords = line.split(SPACES_OR_BRACKET);
                     String queryTableName = startQueryWords[tableNameIndex];
 
-                    saveCurrentLineIndexIfTableFound(tableName, queryTableName, sqlLines.indexOf(line));
+                    checkIfTableFound(tableName, queryTableName);
+                    saveCurrentLineIndex(sqlLines.indexOf(line));
                 });
     }
 
-    private void saveCurrentLineIndexIfTableFound(String tableName, String queryTableName, int currentLineIndex) {
-        if (tableName.equals(queryTableName)) {
+    private void saveCurrentLineIndex(int currentLineIndex) {
+        if (isTableFound) {
             tableBeginIndex = currentLineIndex;
-            isTableFound = true;
         }
+    }
+
+    private void checkIfTableFound(String tableName, String queryTableName) {
+        isTableFound = tableName.equals(queryTableName);
     }
 
     private void findTableEndIndex(List<String> sqlLines) {

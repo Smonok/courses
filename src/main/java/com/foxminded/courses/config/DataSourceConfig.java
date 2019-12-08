@@ -1,4 +1,4 @@
-package com.foxminded.courses;
+package com.foxminded.courses.config;
 
 import javax.sql.DataSource;
 
