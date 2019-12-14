@@ -1,4 +1,4 @@
-package com.foxminded.courses.dao;
+package com.foxminded.courses.db.dao;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
@@ -17,13 +17,13 @@ import org.h2.jdbcx.JdbcDataSource;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
-import com.foxminded.courses.DatabaseConstants;
-import com.foxminded.courses.TablesInitializer;
+import com.foxminded.courses.constants.DatabaseConstants;
+import com.foxminded.courses.db.TablesInitializer;
 
 class CoursesDaoTest {
-    private static final String FIRST_STUDENT_COURSES = "SELECT students_courses.course_id, course_name\n"
-        + "FROM students_courses\n" + "LEFT JOIN courses ON students_courses.course_id = courses.course_id\n"
-        + "GROUP BY students_courses.course_id, course_name,  students_courses.student_id\n"
+    private static final String FIRST_STUDENT_COURSES = "SELECT students_courses.course_id, course_name "
+        + "FROM students_courses " + "LEFT JOIN courses ON students_courses.course_id = courses.course_id "
+        + "GROUP BY students_courses.course_id, course_name,  students_courses.student_id "
         + "HAVING students_courses.student_id = 1;";
     private static final String STUDENT_COURSES_ID = "SELECT course_id FROM students_courses "
         + "WHERE student_id = %d;";
@@ -31,7 +31,7 @@ class CoursesDaoTest {
     private static final String COURSE_NAME = "course_name";
     private static final JdbcDataSource dataSource = new JdbcDataSource();
     private static final List<Integer> firstStudentCourses = new ArrayList<>();
-    private static CoursesDao courses;
+    private static CoursesDao coursesDao;
 
     @BeforeAll
     static void setUp() throws SQLException {
@@ -39,7 +39,7 @@ class CoursesDaoTest {
         dataSource.setUser("sa");
 
         TablesInitializer initializer = new TablesInitializer(dataSource);
-        courses = new CoursesDao(dataSource);
+        coursesDao = new CoursesDao(dataSource);
 
         initializer.initTables();
         initFirstStudentCourses();
@@ -64,7 +64,7 @@ class CoursesDaoTest {
     @Test
     void isCourseExistsShouldReturnTrueWhenIdFromOneToCoursesNumber() throws SQLException {
         for (int i = 1; i <= DatabaseConstants.COURSES_NUMBER; i++) {
-            assertTrue(courses.isCourseExists(i));
+            assertTrue(coursesDao.isCourseExists(i));
         }
     }
 
@@ -72,7 +72,7 @@ class CoursesDaoTest {
     void selectCoursesByStudentIdShouldReturnAllCoursesThatFirstStudentHasWhenIdOne() throws SQLException {
         StringJoiner expectedResult = new StringJoiner("\n");
         int studentId = 1;
-        String actualResult = courses.selectCoursesByStudentId(studentId);
+        String actualResult = coursesDao.selectCoursesByStudentId(studentId);
 
         try (Connection connection = dataSource.getConnection();
             Statement statement = connection.createStatement();
@@ -94,7 +94,7 @@ class CoursesDaoTest {
         int studentId = 1;
 
         for (int courseId : firstStudentCourses) {
-            assertTrue(courses.isStudentHasCourse(studentId, courseId));
+            assertTrue(coursesDao.isStudentHasCourse(studentId, courseId));
         }
     }
 
@@ -102,9 +102,9 @@ class CoursesDaoTest {
     void addStudentToCourseShouldThrowSQLExceptionWhenStudentDoesntExist() {
         int courseId = 1;
 
-        assertThrows(SQLException.class, () -> courses.addStudentToCourse(0, courseId));
-        assertThrows(SQLException.class, () -> courses.addStudentToCourse(-11, courseId));
-        assertThrows(SQLException.class, () -> courses.addStudentToCourse(333, courseId));
+        assertThrows(SQLException.class, () -> coursesDao.addStudentToCourse(0, courseId));
+        assertThrows(SQLException.class, () -> coursesDao.addStudentToCourse(-11, courseId));
+        assertThrows(SQLException.class, () -> coursesDao.addStudentToCourse(333, courseId));
     }
 
     @Test
@@ -119,7 +119,7 @@ class CoursesDaoTest {
 
             int existingCourseId = resultSet.getInt(COURSE_ID);
 
-            assertThrows(SQLException.class, () -> courses.addStudentToCourse(studentId, existingCourseId));
+            assertThrows(SQLException.class, () -> coursesDao.addStudentToCourse(studentId, existingCourseId));
         }
     }
 
@@ -138,7 +138,7 @@ class CoursesDaoTest {
         try (Connection connection = dataSource.getConnection();
             Statement statement = connection.createStatement()) {
 
-            courses.addStudentToCourse(studentId, courseId);
+            coursesDao.addStudentToCourse(studentId, courseId);
             try (ResultSet resultSet = statement.executeQuery(FIRST_STUDENT_COURSES)) {
                 List<Integer> studentCourses = new ArrayList<>();
 
@@ -158,7 +158,7 @@ class CoursesDaoTest {
 
         try (Connection connection = dataSource.getConnection();
             Statement statement = connection.createStatement()) {
-            courses.removeStudentFromCourse(studentId, courseToDelete);
+            coursesDao.removeStudentFromCourse(studentId, courseToDelete);
 
             try (ResultSet resultSet = statement.executeQuery(FIRST_STUDENT_COURSES)) {
                 while (resultSet.next()) {

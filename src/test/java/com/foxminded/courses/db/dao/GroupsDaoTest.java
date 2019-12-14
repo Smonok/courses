@@ -1,4 +1,4 @@
-package com.foxminded.courses.dao;
+package com.foxminded.courses.db.dao;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -9,14 +9,14 @@ import org.h2.jdbcx.JdbcDataSource;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
-import com.foxminded.courses.TablesInitializer;
+import com.foxminded.courses.db.TablesInitializer;
 
 class GroupsDaoTest {
     private static final String NEW_LINE = "[\\r\\n]+";
     private static final String WHITESPACES = "\\s+";
     private static final String ERROR_MESSAGE = "No groups found";
     private static final JdbcDataSource dataSource = new JdbcDataSource();
-    private static GroupsDao groups;
+    private static GroupsDao groupsDao;
 
     @BeforeAll
     static void setUp() throws SQLException {
@@ -24,9 +24,10 @@ class GroupsDaoTest {
         dataSource.setUser("sa");
 
         TablesInitializer initializer = new TablesInitializer(dataSource);
-        groups = new GroupsDao(dataSource);
+        groupsDao = new GroupsDao(dataSource);
 
         initializer.initGroupsTable();
+        initializer.initStudentsTable();
     }
 
     @Test
@@ -34,7 +35,7 @@ class GroupsDaoTest {
         int studentsNumber = 30;
         int lessOrEquals = 1;
 
-        String actualResult = groups.selectGroupsByStudentsNumber(studentsNumber, lessOrEquals);
+        String actualResult = groupsDao.selectGroupsByStudentsNumber(studentsNumber, lessOrEquals);
 
         String[] resultLines = actualResult.split(NEW_LINE);
 
@@ -52,11 +53,11 @@ class GroupsDaoTest {
         int studentsNumber = 3;
         int lessOrEquals = 1;
 
-        String actualResult = groups.selectGroupsByStudentsNumber(studentsNumber, lessOrEquals);
+        String actualResult = groupsDao.selectGroupsByStudentsNumber(studentsNumber, lessOrEquals);
         assertEquals(ERROR_MESSAGE, actualResult);
 
         lessOrEquals = 2;
-        actualResult = groups.selectGroupsByStudentsNumber(studentsNumber, lessOrEquals);
+        actualResult = groupsDao.selectGroupsByStudentsNumber(studentsNumber, lessOrEquals);
         assertEquals(ERROR_MESSAGE, actualResult);
     }
 
@@ -67,7 +68,7 @@ class GroupsDaoTest {
 
         final int lastCharactersNumber = 2;
 
-        String actualResult = groups.selectGroupsByStudentsNumber(studentsNumber, lessOrEquals);
+        String actualResult = groupsDao.selectGroupsByStudentsNumber(studentsNumber, lessOrEquals);
 
         if (!actualResult.equals(ERROR_MESSAGE)) {
             String[] resultLines = actualResult.split(NEW_LINE);

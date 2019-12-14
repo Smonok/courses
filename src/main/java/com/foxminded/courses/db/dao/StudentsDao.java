@@ -1,4 +1,4 @@
-package com.foxminded.courses.dao;
+package com.foxminded.courses.db.dao;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -12,7 +12,7 @@ import javax.sql.DataSource;
 
 import org.slf4j.Logger;
 
-import com.foxminded.courses.DatabaseConstants;
+import com.foxminded.courses.constants.DatabaseConstants;
 
 public class StudentsDao {
     private static final String STUDENT_ID = "student_id";
@@ -36,7 +36,7 @@ public class StudentsDao {
             resultSet.next();
             return resultSet.getBoolean(EXISTS);
         } catch (SQLException e) {
-            throw new SQLException("Cannot check if student with id = " + id + " exists\n" + isExists, e);
+            throw new SQLException("Cannot check if student with id = " + id + " exists: " + isExists, e);
         }
     }
 
@@ -51,7 +51,7 @@ public class StudentsDao {
             LOG.info("Student with id = {}: {} {} added successfully", studentId, firstName, lastName);
         } catch (SQLException e) {
             throw new SQLException("Cannot add student: " + firstName + " " + lastName + ", group ID = " + groupId
-                + "\n" + insert, e);
+                + ": " + insert, e);
         }
     }
 
@@ -64,7 +64,7 @@ public class StudentsDao {
             statement.executeUpdate(deleteStudent);
             LOG.info("Student with id = {} successfully deleted", studentId);
         } catch (SQLException e) {
-            throw new SQLException("Cannot delete student with ID = " + studentId + "\n" + deleteStudent, e);
+            throw new SQLException("Cannot delete student with ID = " + studentId + ": " + deleteStudent, e);
         }
     }
 
@@ -80,7 +80,7 @@ public class StudentsDao {
             LOG.info("Students related to {} course:", courseName);
             return combineStudentsInfo(resultSet);
         } catch (SQLException e) {
-            throw new SQLException("Cannot find student related to " + courseId + " course.\n" + selectStudents, e);
+            throw new SQLException("Cannot find student related to " + courseId + " course.: " + selectStudents, e);
         }
     }
 
@@ -91,7 +91,7 @@ public class StudentsDao {
 
             return combineStudentsInfo(resultSet);
         } catch (SQLException e) {
-            throw new SQLException("Cannot select all students.\n" + DatabaseConstants.ALL_STUDENTS, e);
+            throw new SQLException("Cannot select all students.: " + DatabaseConstants.ALL_STUDENTS, e);
         }
     }
 
@@ -106,14 +106,11 @@ public class StudentsDao {
     }
 
     private String parseStudentInfo(ResultSet resultSet) throws SQLException {
-        try {
-            int id = resultSet.getInt(STUDENT_ID);
-            String firstName = resultSet.getString(FIRST_NAME);
-            String lastName = resultSet.getString(LAST_NAME);
 
-            return String.format("%d. %s %s", id, firstName, lastName);
-        } catch (SQLException e) {
-            throw new SQLException("Cannot parse student info");
-        }
+        int id = resultSet.getInt(STUDENT_ID);
+        String firstName = resultSet.getString(FIRST_NAME);
+        String lastName = resultSet.getString(LAST_NAME);
+
+        return String.format("%d. %s %s", id, firstName, lastName);
     }
 }

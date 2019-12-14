@@ -1,4 +1,4 @@
-package com.foxminded.courses.dao;
+package com.foxminded.courses.db.dao;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -8,7 +8,7 @@ import java.util.StringJoiner;
 
 import javax.sql.DataSource;
 
-import com.foxminded.courses.DatabaseConstants;
+import com.foxminded.courses.constants.DatabaseConstants;
 
 public class GroupsDao {
     private static final String ERROR_MESSAGE = "No groups found";
@@ -30,7 +30,7 @@ public class GroupsDao {
 
             return combineGroupsWithStudentsNumber(resultSet);
         } catch (SQLException e) {
-            throw new SQLException("Cannot find all groups with " + studentsNumber + " students.\n"
+            throw new SQLException("Cannot find all groups with " + studentsNumber + " students.: "
                 + groupsWithStudentsCount, e);
         }
     }
@@ -48,7 +48,7 @@ public class GroupsDao {
     }
 
     private String combineGroupsWithStudentsNumber(ResultSet resultSet) throws SQLException {
-        StringJoiner groupsWithStudents = new StringJoiner("\n");
+        StringJoiner groupsWithStudents = new StringJoiner(": ");
 
         while (resultSet.next()) {
             String groupInfo = parseGroupInfo(resultSet);
@@ -76,12 +76,12 @@ public class GroupsDao {
 
             return combineGroupsInfo(resultSet);
         } catch (SQLException e) {
-            throw new SQLException("Cannot select all groups.\n" + DatabaseConstants.ALL_GROUPS, e);
+            throw new SQLException("Cannot select all groups.: " + DatabaseConstants.ALL_GROUPS, e);
         }
     }
 
     private String combineGroupsInfo(ResultSet resultSet) throws SQLException {
-        StringJoiner groups = new StringJoiner("\n");
+        StringJoiner groups = new StringJoiner(": ");
 
         while (resultSet.next()) {
             groups.add(parseGroupInfo(resultSet));

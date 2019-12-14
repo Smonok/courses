@@ -1,5 +1,6 @@
-package com.foxminded.courses;
+package com.foxminded.courses.util;
 
+import static com.foxminded.courses.util.QueriesReaderUtil.createTable;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -15,8 +16,8 @@ import org.junit.Test;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 
-class QueriesReaderTest {
-    private static final ClassLoader loader = QueriesReaderTest.class.getClassLoader();
+class QueriesReaderUtilTest {
+    private static final ClassLoader loader = QueriesReaderUtilTest.class.getClassLoader();
     private static final String FILE_NAME = "create_test_tables_query.sql";
     private static final String COURSES_TABLE_NAME = "courses";
     private static final String GROUPS_TABLE_NAME = "groups";
@@ -47,13 +48,13 @@ class QueriesReaderTest {
     void createTableShouldThrowNullPointerExceptionWhenFileNotFound() {
         String incorrectFileName = "incorrect";
 
-        assertThrows(NullPointerException.class, () -> new QueriesReader().createTable(incorrectFileName,
+        assertThrows(NullPointerException.class, () -> createTable(incorrectFileName,
                         GROUPS_TABLE_NAME));
     }
 
     @Test
     void createTableShouldThrowNoSuchElementExceptionWhenEmptyFile() {
-        assertThrows(NoSuchElementException.class, () -> new QueriesReader().createTable(FILE_NAME, GROUPS_TABLE_NAME));
+        assertThrows(NoSuchElementException.class, () -> createTable(FILE_NAME, GROUPS_TABLE_NAME));
     }
 
     @Test
@@ -62,14 +63,14 @@ class QueriesReaderTest {
 
         createTableFileWriter.println(CREATE_GROUPS_TABLE_QUERY);
 
-        assertThrows(NoSuchElementException.class, () -> new QueriesReader().createTable(FILE_NAME, tableName));
+        assertThrows(NoSuchElementException.class, () -> createTable(FILE_NAME, tableName));
     }
 
     @Test
     void createTableShouldReturnQueryWhenTableExists() {
         createTableFileWriter.println(CREATE_COURSES_TABLE_QUERY);
 
-        String actualResult = new QueriesReader().createTable(FILE_NAME, COURSES_TABLE_NAME);
+        String actualResult = createTable(FILE_NAME, COURSES_TABLE_NAME);
 
         assertEquals(CREATE_COURSES_TABLE_QUERY, actualResult);
     }
@@ -81,7 +82,7 @@ class QueriesReaderTest {
 
         createTableFileWriter.println(expectedResult);
 
-        String actualResult = new QueriesReader().createTable(FILE_NAME, GROUPS_TABLE_NAME);
+        String actualResult = createTable(FILE_NAME, GROUPS_TABLE_NAME);
 
         assertEquals(expectedResult, actualResult);
     }
@@ -92,7 +93,7 @@ class QueriesReaderTest {
 
         createTableFileWriter.println(expectedResult);
 
-        String actualResult = new QueriesReader().createTable(FILE_NAME, GROUPS_TABLE_NAME);
+        String actualResult = createTable(FILE_NAME, GROUPS_TABLE_NAME);
 
         assertEquals(expectedResult, actualResult);
     }
@@ -102,7 +103,7 @@ class QueriesReaderTest {
         createTableFileWriter.println(CREATE_GROUPS_TABLE_QUERY);
         createTableFileWriter.println(CREATE_COURSES_TABLE_QUERY);
 
-        String actualResult = new QueriesReader().createTable(FILE_NAME, COURSES_TABLE_NAME);
+        String actualResult = createTable(FILE_NAME, COURSES_TABLE_NAME);
 
         assertEquals(CREATE_COURSES_TABLE_QUERY, actualResult);
     }
@@ -114,7 +115,7 @@ class QueriesReaderTest {
         createTableFileWriter.println(createTable);
         createTableFileWriter.println(CREATE_COURSES_TABLE_QUERY);
 
-        String actualResult = new QueriesReader().createTable(FILE_NAME, COURSES_TABLE_NAME);
+        String actualResult = createTable(FILE_NAME, COURSES_TABLE_NAME);
 
         assertEquals(CREATE_COURSES_TABLE_QUERY, actualResult);
     }

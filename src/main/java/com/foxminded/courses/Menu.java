@@ -9,18 +9,18 @@ import java.util.Scanner;
 
 import org.slf4j.Logger;
 
-import com.foxminded.courses.dao.CoursesDao;
-import com.foxminded.courses.dao.GroupsDao;
-import com.foxminded.courses.dao.StudentsDao;
+import com.foxminded.courses.db.dao.CoursesDao;
+import com.foxminded.courses.db.dao.GroupsDao;
+import com.foxminded.courses.db.dao.StudentsDao;
 
 public class Menu {
     private static final String WRONG_INPUT_MESSAGE = "Error! Wrong input";
     private static final String EXPECTED_INTEGER_MESSAGE = "Please, enter the number";
 
     private static final Scanner scanner = new Scanner(System.in);
-    private static final GroupsDao groups = new GroupsDao(getDataSource());
-    private static final StudentsDao students = new StudentsDao(getDataSource());
-    private static final CoursesDao courses = new CoursesDao(getDataSource());
+    private static final GroupsDao groupsDao = new GroupsDao(getDataSource());
+    private static final StudentsDao studentsDao = new StudentsDao(getDataSource());
+    private static final CoursesDao coursesDao = new CoursesDao(getDataSource());
     private static final Logger LOG = getLogger(Menu.class);
 
     private static boolean isExit = false;
@@ -88,7 +88,7 @@ public class Menu {
         int lessOrEquals = chooseHowCompareGroups(studentsNumber);
 
         if (lessOrEquals == 1 || lessOrEquals == 2) {
-            LOG.info(groups.selectGroupsByStudentsNumber(studentsNumber, lessOrEquals));
+            LOG.info(groupsDao.selectGroupsByStudentsNumber(studentsNumber, lessOrEquals));
         } else {
             startFromTheBeginning();
         }
@@ -119,8 +119,8 @@ public class Menu {
     private static void printStudentsByCourse() throws SQLException {
         int courseId = enterCourseIdFromList();
 
-        if (courses.isCourseExists(courseId)) {
-            LOG.info(students.selectStudentsByCourse(courseId));
+        if (coursesDao.isCourseExists(courseId)) {
+            LOG.info(studentsDao.selectStudentsByCourse(courseId));
         } else {
             startFromTheBeginning();
         }
@@ -131,7 +131,7 @@ public class Menu {
         String lastName = enterSurname();
         int groupId = enterGroupIdFromList();
 
-        students.addStudent(firstName, lastName, groupId);
+        studentsDao.addStudent(firstName, lastName, groupId);
     }
 
     private static String enterName() {
@@ -146,7 +146,7 @@ public class Menu {
     }
 
     private static int enterGroupIdFromList() throws SQLException {
-        LOG.info(groups.selectAllGroups());
+        LOG.info(groupsDao.selectAllGroups());
 
         LOG.info("Enter student's group: ");
         try {
@@ -159,8 +159,8 @@ public class Menu {
     private static void deleteStudentById() throws SQLException {
         int studentId = enterStudentIdFromList();
 
-        if (students.isStudentExists(studentId)) {
-            students.deleteStudentById(studentId);
+        if (studentsDao.isStudentExists(studentId)) {
+            studentsDao.deleteStudentById(studentId);
         } else {
             startFromTheBeginning();
         }
@@ -169,12 +169,12 @@ public class Menu {
     private static void addStudentToCourse() throws SQLException {
         int studentId = enterStudentIdFromList();
 
-        if (students.isStudentExists(studentId)) {
-            LOG.info(courses.selectCoursesByStudentId(studentId));
+        if (studentsDao.isStudentExists(studentId)) {
+            LOG.info(coursesDao.selectCoursesByStudentId(studentId));
 
             int courseId = enterCourseIdFromList();
-            if (!courses.isStudentHasCourse(studentId, courseId)) {
-                courses.addStudentToCourse(studentId, courseId);
+            if (!coursesDao.isStudentHasCourse(studentId, courseId)) {
+                coursesDao.addStudentToCourse(studentId, courseId);
             } else {
                 LOG.info("Error! Student with id = {} is already in {} course.", studentId, courseId);
                 startFromTheBeginning();
@@ -185,7 +185,7 @@ public class Menu {
     }
 
     private static int enterCourseIdFromList() throws SQLException {
-        LOG.info(courses.selectAllCourses());
+        LOG.info(coursesDao.selectAllCourses());
         LOG.info("Enter the course id: ");
         try {
             return scanner.nextInt();
@@ -197,16 +197,16 @@ public class Menu {
     private static void removeStudentFromCourse() throws SQLException {
         int studentId = enterStudentIdFromList();
 
-        if (students.isStudentExists(studentId)) {
-            LOG.info(courses.selectCoursesByStudentId(studentId));
+        if (studentsDao.isStudentExists(studentId)) {
+            LOG.info(coursesDao.selectCoursesByStudentId(studentId));
 
             LOG.info("Enter course id: ");
 
             try {
                 int courseId = scanner.nextInt();
 
-                if (courses.isStudentHasCourse(studentId, courseId)) {
-                    courses.removeStudentFromCourse(studentId, courseId);
+                if (coursesDao.isStudentHasCourse(studentId, courseId)) {
+                    coursesDao.removeStudentFromCourse(studentId, courseId);
                 } else {
                     startFromTheBeginning();
                 }
@@ -219,7 +219,7 @@ public class Menu {
     }
 
     private static int enterStudentIdFromList() throws SQLException {
-        LOG.info(students.selectAllStudents());
+        LOG.info(studentsDao.selectAllStudents());
         LOG.info("Enter student id: ");
         try {
             return scanner.nextInt();

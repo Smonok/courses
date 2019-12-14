@@ -1,4 +1,4 @@
-package com.foxminded.courses.dao;
+package com.foxminded.courses.db.dao;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -14,22 +14,22 @@ import org.h2.jdbcx.JdbcDataSource;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
-import com.foxminded.courses.DatabaseConstants;
-import com.foxminded.courses.TablesInitializer;
+import com.foxminded.courses.constants.DatabaseConstants;
+import com.foxminded.courses.db.TablesInitializer;
 
 class StudentsDaoTest {
     private static final JdbcDataSource dataSource = new JdbcDataSource();
-    private static final String STUDENTS_BY_MATH_COURSE = "SELECT students_courses.student_id, first_name, last_name\n"
-                + "FROM students_courses\n"
-                + "LEFT JOIN students ON students_courses.student_id = students.student_id\n"
-                + "LEFT JOIN courses ON students_courses.course_id = courses.course_id\n"
-                + "GROUP BY students_courses.student_id, courses.course_id, first_name, last_name\n"
+    private static final String STUDENTS_BY_MATH_COURSE = "SELECT students_courses.student_id, first_name, last_name "
+                + "FROM students_courses "
+                + "LEFT JOIN students ON students_courses.student_id = students.student_id "
+                + "LEFT JOIN courses ON students_courses.course_id = courses.course_id "
+                + "GROUP BY students_courses.student_id, courses.course_id, first_name, last_name "
                 + "HAVING courses.course_id = 1;";
     private static final String SELECT_STUDENTS_ID = "SELECT student_id FROM students;";
     private static final String STUDENT_ID = "student_id";
     private static final String FIRST_NAME = "first_name";
     private static final String LAST_NAME = "last_name";
-    private static StudentsDao students;
+    private static StudentsDao studentsDao;
 
     @BeforeAll
     static void setUp() throws SQLException {
@@ -37,7 +37,7 @@ class StudentsDaoTest {
         dataSource.setUser("sa");
 
         TablesInitializer initializer = new TablesInitializer(dataSource);
-        students = new StudentsDao(dataSource);
+        studentsDao = new StudentsDao(dataSource);
 
         initializer.initStudentsTable();
         initializer.initCoursesTable();
@@ -47,7 +47,7 @@ class StudentsDaoTest {
     @Test
     void isStudentExistsShouldReturnTrueWhenIdFromOneToStudentsNumber() throws SQLException {
         for (int i = 1; i <= DatabaseConstants.STUDENTS_NUMBER; i++) {
-            assertTrue(students.isStudentExists(i));
+            assertTrue(studentsDao.isStudentExists(i));
         }
     }
 
@@ -57,7 +57,7 @@ class StudentsDaoTest {
         String lastName = "Fleck";
         int groupId = 1;
 
-        students.addStudent(firstName, lastName, groupId);
+        studentsDao.addStudent(firstName, lastName, groupId);
         try (Connection connection = dataSource.getConnection();
             Statement statement = connection.createStatement();
             ResultSet resultSet = statement.executeQuery(SELECT_STUDENTS_ID)) {
@@ -79,7 +79,7 @@ class StudentsDaoTest {
         try (Connection connection = dataSource.getConnection();
             Statement statement = connection.createStatement()) {
 
-            students.deleteStudentById(studentId);
+            studentsDao.deleteStudentById(studentId);
             try(ResultSet resultSet = statement.executeQuery(SELECT_STUDENTS_ID)){
                 resultSet.next();
                 int actualFirstId = resultSet.getInt(STUDENT_ID);
@@ -94,14 +94,14 @@ class StudentsDaoTest {
     void selectStudentsByCourseShouldThrowSQLExceptionWhenCourseDoesntExist() throws SQLException {
         int courseId = 0;
 
-        assertThrows(SQLException.class, () -> students.selectStudentsByCourse(courseId));
+        assertThrows(SQLException.class, () -> studentsDao.selectStudentsByCourse(courseId));
     }
 
     @Test
     void selectStudentsByCourseShouldReturnAllStudentsThatInMathCourseWhenIdOne() throws SQLException {
         StringJoiner expectedResult = new StringJoiner("\n");
         int courseId = 1;
-        String actualResult = students.selectStudentsByCourse(courseId);
+        String actualResult = studentsDao.selectStudentsByCourse(courseId);
 
         try (Connection connection = dataSource.getConnection();
             Statement statement = connection.createStatement();

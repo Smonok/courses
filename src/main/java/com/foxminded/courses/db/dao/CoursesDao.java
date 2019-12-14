@@ -1,4 +1,4 @@
-package com.foxminded.courses.dao;
+package com.foxminded.courses.db.dao;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -12,7 +12,7 @@ import javax.sql.DataSource;
 
 import org.slf4j.Logger;
 
-import com.foxminded.courses.DatabaseConstants;
+import com.foxminded.courses.constants.DatabaseConstants;
 
 public class CoursesDao {
     private static final String COURSE_ID = "course_id";
@@ -35,7 +35,7 @@ public class CoursesDao {
             resultSet.next();
             return resultSet.getBoolean(EXISTS);
         } catch (SQLException e) {
-            throw new SQLException("Cannot check if course with id = " + id + " exists\n" + isExists, e);
+            throw new SQLException("Cannot check if course with id = " + id + " exists: " + isExists, e);
         }
     }
 
@@ -50,7 +50,7 @@ public class CoursesDao {
             return resultSet.getBoolean(EXISTS);
         } catch (SQLException e) {
             throw new SQLException("Cannot check if student with id = " + studentId
-                + " has course with id = " + courseId + "\n" + isExists, e);
+                + " has course with id = " + courseId + ": " + isExists, e);
         }
     }
 
@@ -63,21 +63,21 @@ public class CoursesDao {
 
             return combineCoursesInfo(resultSet);
         } catch (SQLException e) {
-            throw new SQLException("Cannot select all courses.\n" + DatabaseConstants.ALL_COURSES, e);
+            throw new SQLException("Cannot select all courses.: " + DatabaseConstants.ALL_COURSES, e);
         }
     }
 
     public String selectCoursesByStudentId(int studentId) throws SQLException {
         String studentCourses = String.format(DatabaseConstants.STUDENT_COURSES, studentId);
 
-        LOG.info("Courses of student with ID = {}:", studentId);
+        LOG.info("Courses of student with ID = {}", studentId);
         try (Connection connection = dataSource.getConnection();
             Statement statement = connection.createStatement();
             ResultSet resultSet = statement.executeQuery(studentCourses)) {
 
             return combineCoursesInfo(resultSet);
         } catch (SQLException e) {
-            throw new SQLException("Cannot select courses for student with Id = " + studentId + "\n"
+            throw new SQLException("Cannot select courses for student with Id = " + studentId + ": "
                 + studentCourses, e);
         }
     }
@@ -108,7 +108,7 @@ public class CoursesDao {
             statement.executeUpdate(addCourseForStudent);
             LOG.info("Course with id = {} successfully added to student with id = {}", courseId, studentId);
         } catch (SQLException e) {
-            throw new SQLException("Cannot add student with ID = " + studentId + " to " + courseId + " course\n"
+            throw new SQLException("Cannot add student with ID = " + studentId + " to " + courseId + " course: "
                 + addCourseForStudent, e);
         }
     }
@@ -122,7 +122,7 @@ public class CoursesDao {
             statement.executeUpdate(deleteStudentCourse);
             LOG.info("Course with id = {} successfully deleted from student with id = {}", courseId, studentId);
         } catch (SQLException e) {
-            throw new SQLException("Cannot remove student with ID = " + studentId + " from " + courseId + " course\n"
+            throw new SQLException("Cannot remove student with ID = " + studentId + " from " + courseId + " course: "
                 + deleteStudentCourse, e);
         }
     }
@@ -137,7 +137,7 @@ public class CoursesDao {
             resultSet.next();
             return resultSet.getString(COURSE_NAME);
         } catch (SQLException e) {
-            throw new SQLException("Cannot get course with ID = " + courseId + "\n" + courseName, e);
+            throw new SQLException("Cannot get course with ID = " + courseId + ": " + courseName, e);
         }
     }
 }

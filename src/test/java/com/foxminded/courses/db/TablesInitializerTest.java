@@ -1,4 +1,4 @@
-package com.foxminded.courses;
+package com.foxminded.courses.db;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -11,6 +11,8 @@ import java.sql.Statement;
 import org.h2.jdbcx.JdbcDataSource;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+
+import com.foxminded.courses.db.TablesInitializer;
 
 class TablesInitializerTest {
     private static final JdbcDataSource dataSource = new JdbcDataSource();
