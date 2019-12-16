@@ -3,14 +3,9 @@ package com.foxminded.courses.util;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 class RandomizerUtilTest {
-
-    @BeforeAll
-    static void setUpBeforeClass() throws Exception {
-    }
 
     @Test
     void getRandomNumberBetweenShouldThrowIllegalArgumentExceptionWhenMinGreaterThanMax() {
@@ -23,7 +18,7 @@ class RandomizerUtilTest {
     @Test
     void getRandomNumberBetweenShouldThrowIllegalArgumentExceptionWhenMinEqualsMax() {
         int max = 5;
-        int min = 10;
+        int min = 5;
 
         assertThrows(IllegalArgumentException.class, () -> RandomizerUtil.getRandomNumberBetween(min, max));
     }
