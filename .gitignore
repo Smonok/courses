@@ -2,3 +2,5 @@
 /README.md
 /.classpath
 /.project
+/.settings/
+/target/
